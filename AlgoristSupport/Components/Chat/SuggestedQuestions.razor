@@ -1,0 +1,28 @@
+@if (Questions.Count > 0)
+{
+    <div class="chat-suggestions">
+        <p class="chat-suggestions-title" id="chat-suggestions-title">Sugestões de perguntas:</p>
+        <ul class="chat-suggestions-list" aria-labelledby="chat-suggestions-title">
+            @foreach (var question in Questions)
+            {
+                <li>
+                    <button type="button" class="btn btn-outline-primary btn-sm chat-chip"
+                            disabled="@Disabled" @onclick="() => OnSelect.InvokeAsync(question)">
+                        @question
+                    </button>
+                </li>
+            }
+        </ul>
+    </div>
+}
+
+@code {
+    [Parameter]
+    public IReadOnlyList<string> Questions { get; set; } = [];
+
+    [Parameter]
+    public bool Disabled { get; set; }
+
+    [Parameter]
+    public EventCallback<string> OnSelect { get; set; }
+}

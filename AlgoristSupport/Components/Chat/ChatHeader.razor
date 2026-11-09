@@ -1,0 +1,20 @@
+<header class="chat-header">
+    <div class="chat-header-text">
+        <h1 class="chat-title">@AssistantName</h1>
+        <p class="chat-notice" role="note">
+            <strong>Demonstração:</strong> este é um assistente automatizado de demonstração.
+            As respostas tratam de uma política fictícia, criada apenas para fins ilustrativos.
+        </p>
+    </div>
+    <button type="button" class="btn btn-outline-secondary btn-sm chat-new" @onclick="OnNewConversation">
+        Nova conversa
+    </button>
+</header>
+
+@code {
+    [Parameter, EditorRequired]
+    public string AssistantName { get; set; } = string.Empty;
+
+    [Parameter]
+    public EventCallback OnNewConversation { get; set; }
+}

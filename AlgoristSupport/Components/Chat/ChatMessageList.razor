@@ -1,0 +1,30 @@
+<ol class="chat-messages" role="log" aria-label="Mensagens da conversa">
+    @foreach (var entry in Entries)
+    {
+        <li @key="entry.Id" class="chat-message @(entry.IsUser ? "chat-message-user" : "chat-message-assistant")">
+            <span class="visually-hidden">@(entry.IsUser ? "Você" : AssistantName) disse:</span>
+            <div class="chat-bubble">
+                @if (entry.Length > 0)
+                {
+                    <span class="chat-text">@entry.Text</span>
+                }
+                @if (entry.Status == ChatEntryStatus.Interrupted)
+                {
+                    <span class="chat-status">Resposta interrompida</span>
+                }
+                else if (entry.Status == ChatEntryStatus.Failed)
+                {
+                    <span class="chat-status chat-status-error">Desculpe, não foi possível gerar a resposta. Tente novamente.</span>
+                }
+            </div>
+        </li>
+    }
+</ol>
+
+@code {
+    [Parameter, EditorRequired]
+    public IReadOnlyList<ChatEntry> Entries { get; set; } = [];
+
+    [Parameter, EditorRequired]
+    public string AssistantName { get; set; } = string.Empty;
+}

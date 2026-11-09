@@ -1,0 +1,103 @@
+@implements IAsyncDisposable
+@inject IJSRuntime JS
+
+<form class="chat-composer" @ref="formElement" @onsubmit="SubmitAsync" @onsubmit:preventDefault>
+    <label class="visually-hidden" for="chat-input">Mensagem</label>
+    <textarea id="chat-input" @ref="textareaElement"
+              class="form-control chat-input @(IsTooLong ? "is-invalid" : null)"
+              rows="2"
+              placeholder="Digite sua pergunta sobre a política… (Enter envia, Shift+Enter quebra linha)"
+              aria-describedby="chat-counter chat-feedback"
+              aria-invalid="@(IsTooLong ? "true" : "false")"
+              @bind:get="Value" @bind:set="SetValueAsync" @bind:event="oninput"></textarea>
+
+    <div class="chat-composer-footer">
+        <div class="chat-composer-info">
+            <span id="chat-counter" class="chat-counter @(IsTooLong ? "chat-counter-error" : null)">@Length/@MaxLength</span>
+            <span id="chat-feedback" class="chat-feedback" role="alert">@(IsTooLong ? validation.Message : null)</span>
+        </div>
+        <div class="chat-composer-actions">
+            @if (IsGenerating)
+            {
+                <button type="button" class="btn btn-outline-danger chat-stop" @onclick="OnStop">Parar</button>
+            }
+            <button type="submit" class="btn btn-primary chat-send" disabled="@(!CanSend)">Enviar</button>
+        </div>
+    </div>
+</form>
+
+@code {
+    private ElementReference formElement;
+    private ElementReference textareaElement;
+    private IJSObjectReference? module;
+    private MessageValidationResult validation;
+
+    [Parameter]
+    public string Value { get; set; } = string.Empty;
+
+    [Parameter]
+    public EventCallback<string> ValueChanged { get; set; }
+
+    [Parameter, EditorRequired]
+    public int MaxLength { get; set; }
+
+    [Parameter]
+    public bool IsGenerating { get; set; }
+
+    [Parameter]
+    public EventCallback OnSend { get; set; }
+
+    [Parameter]
+    public EventCallback OnStop { get; set; }
+
+    private int Length => Value?.Length ?? 0;
+
+    private bool IsTooLong => validation.Error == MessageValidationError.TooLong;
+
+    private bool CanSend => !IsGenerating && validation.IsValid;
+
+    protected override void OnParametersSet () => validation = ChatMessageValidator.Validate(Value, MaxLength);
+
+    protected override async Task OnAfterRenderAsync (bool firstRender)
+    {
+        if (firstRender)
+        {
+            module = await JS.InvokeAsync<IJSObjectReference>("import", "./Components/Chat/ChatComposer.razor.js");
+            if (module is not null)
+            {
+                await module.InvokeVoidAsync("attachComposer", textareaElement, formElement);
+            }
+        }
+    }
+
+    private Task SetValueAsync (string? value) => ValueChanged.InvokeAsync(value ?? string.Empty);
+
+    private async Task SubmitAsync ()
+    {
+        // Enter triggers form.requestSubmit(), which bypasses the disabled Send button, so guard here too.
+        if (!CanSend)
+        {
+            return;
+        }
+
+        await OnSend.InvokeAsync();
+    }
+
+    public async ValueTask DisposeAsync ()
+    {
+        if (module is null)
+        {
+            return;
+        }
+
+        try
+        {
+            await module.InvokeVoidAsync("detachComposer", textareaElement);
+            await module.DisposeAsync();
+        }
+        catch (JSDisconnectedException)
+        {
+            // Circuit already gone; nothing to clean up on the client.
+        }
+    }
+}

@@ -1,3 +1,4 @@
 <Solution>
+  <Project Path="AlgoristSupport.Tests/AlgoristSupport.Tests.csproj" />
   <Project Path="AlgoristSupport/AlgoristSupport.csproj" />
 </Solution>

@@ -1,0 +1,107 @@
+@implements IAsyncDisposable
+@inject ChatSession Session
+@inject IOptions<SupportChatOptions> ChatOptions
+@inject IJSRuntime JS
+
+<section class="chat-panel" aria-label="Chat de suporte">
+    <ChatHeader AssistantName="@Options.AssistantName" OnNewConversation="NewConversation" />
+
+    <div class="chat-scroll" @ref="scrollElement">
+        @if (Session.Entries.Count == 0)
+        {
+            <div class="chat-empty">
+                <p class="chat-welcome">Olá! Faça uma pergunta sobre a política de prestação de serviços da Algorist.</p>
+                <SuggestedQuestions Questions="Options.SuggestedQuestions"
+                                    Disabled="Session.IsGenerating"
+                                    OnSelect="SendSuggestionAsync" />
+            </div>
+        }
+        else
+        {
+            <ChatMessageList Entries="Session.Entries" AssistantName="@Options.AssistantName" />
+        }
+    </div>
+
+    <div class="chat-generating" role="status" aria-live="polite">
+        @if (Session.IsGenerating)
+        {
+            <span class="chat-dots" aria-hidden="true"><span></span><span></span><span></span></span>
+            <span>Gerando resposta…</span>
+        }
+    </div>
+
+    <ChatComposer @bind-Value="draft"
+                  MaxLength="Session.MaxMessageLength"
+                  IsGenerating="Session.IsGenerating"
+                  OnSend="SendDraftAsync"
+                  OnStop="Session.Stop" />
+</section>
+
+@code {
+    private ElementReference scrollElement;
+    private IJSObjectReference? module;
+    private string draft = string.Empty;
+    private (int Count, int LastLength, ChatEntryStatus? LastStatus, bool Generating) lastScrollState;
+
+    private SupportChatOptions Options => ChatOptions.Value;
+
+    protected override void OnInitialized () => Session.Changed += OnSessionChanged;
+
+    protected override async Task OnAfterRenderAsync (bool firstRender)
+    {
+        if (firstRender)
+        {
+            module = await JS.InvokeAsync<IJSObjectReference>("import", "./Components/Chat/ChatPanel.razor.js");
+        }
+
+        // Keep the latest message in view when a message is added or the streamed reply grows.
+        var last = Session.Entries.Count > 0 ? Session.Entries[^1] : null;
+        var state = (Session.Entries.Count, last?.Length ?? 0, last?.Status, Session.IsGenerating);
+        if (state != lastScrollState && module is not null)
+        {
+            lastScrollState = state;
+            await module.InvokeVoidAsync("scrollToBottom", scrollElement);
+        }
+    }
+
+    private async Task SendDraftAsync ()
+    {
+        var text = draft;
+        if (!Session.CanSend(text))
+        {
+            return;
+        }
+
+        draft = string.Empty;
+        await Session.SendAsync(text);
+    }
+
+    private Task SendSuggestionAsync (string question) => Session.SendAsync(question);
+
+    private void NewConversation ()
+    {
+        Session.Reset();
+        draft = string.Empty;
+    }
+
+    private void OnSessionChanged () => _ = InvokeAsync(StateHasChanged);
+
+    public async ValueTask DisposeAsync ()
+    {
+        Session.Changed -= OnSessionChanged;
+
+        if (module is null)
+        {
+            return;
+        }
+
+        try
+        {
+            await module.DisposeAsync();
+        }
+        catch (JSDisconnectedException)
+        {
+            // Circuit already gone.
+        }
+    }
+}
