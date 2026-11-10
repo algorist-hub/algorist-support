@@ -1,0 +1,233 @@
+# support-chat Specification
+
+## Purpose
+
+Provides the end-user support chat experience in pt-BR: a chat screen where a visitor composes questions, watches a streamed assistant reply, can stop or reset the conversation, and keeps history only for the duration of their session.
+
+## Requirements
+
+### Requirement: Chat screen header and demo notice
+The chat screen SHALL display a header containing the configured assistant name and a permanent notice, in pt-BR, stating that the assistant is an automated demo and that it answers about a fictional policy. The notice MUST remain visible at all times, regardless of conversation length or state, and MUST NOT be dismissible.
+
+#### Scenario: Header shown on first load
+- **WHEN** a visitor opens the chat screen
+- **THEN** the header shows the configured assistant name
+- **AND** the header shows a notice that this is an automated demo assistant and the policy is fictional
+
+#### Scenario: Notice stays visible in a long conversation
+- **WHEN** the conversation has enough messages to scroll the message list
+- **THEN** the demo notice remains visible without scrolling
+
+#### Scenario: Notice cannot be dismissed
+- **WHEN** a visitor inspects the notice
+- **THEN** no control is offered to hide or close it
+
+### Requirement: Message list rendering
+The chat screen SHALL display the conversation as an ordered list of messages, oldest first, where each message is visually and semantically identified as either a user message or an assistant message. Message text MUST be rendered as plain text (no HTML interpretation) and MUST preserve line breaks entered by the user.
+
+#### Scenario: User and assistant messages are distinguishable
+- **WHEN** the conversation contains a user message followed by an assistant reply
+- **THEN** both messages appear in that order
+- **AND** each message is labeled or styled so its author (user or assistant) is identifiable, including by assistive technology
+
+#### Scenario: Markup in a message is shown literally
+- **WHEN** a user sends the message `<b>olá</b>`
+- **THEN** the message list shows the literal text `<b>olá</b>` and no bold formatting is applied
+
+#### Scenario: Multi-line message preserves line breaks
+- **WHEN** a user sends a message containing two lines
+- **THEN** the message is displayed on two lines
+
+### Requirement: Auto-scroll to latest message
+The message list SHALL keep the latest message in view: it MUST scroll to the bottom when a new message is added and while an assistant reply grows during streaming.
+
+#### Scenario: Scroll on new user message
+- **WHEN** a user sends a message in a conversation that already overflows the visible area
+- **THEN** the message list scrolls so the new message is visible
+
+#### Scenario: Scroll follows streaming reply
+- **WHEN** an assistant reply grows beyond the visible area while streaming
+- **THEN** the message list keeps scrolling so the latest streamed text stays visible
+
+### Requirement: Message composition and sending
+The chat screen SHALL provide a multi-line text input and a Send button. Pressing Enter in the input MUST send the message; pressing Shift+Enter MUST insert a newline without sending. Clicking Send MUST send the message. On a successful send, the message MUST be appended to the conversation as a user message (with leading and trailing whitespace trimmed) and the input MUST be cleared.
+
+#### Scenario: Send with button
+- **WHEN** a user types "Qual o prazo de garantia?" and clicks Send
+- **THEN** the message appears in the list as a user message
+- **AND** the input is cleared
+
+#### Scenario: Send with Enter
+- **WHEN** a user types a valid message and presses Enter
+- **THEN** the message is sent and no newline is added to the input
+
+#### Scenario: Shift+Enter inserts newline
+- **WHEN** a user presses Shift+Enter in the input
+- **THEN** a newline is inserted in the input
+- **AND** no message is sent
+
+#### Scenario: Surrounding whitespace is trimmed
+- **WHEN** a user sends "   Olá   "
+- **THEN** the user message is stored and displayed as "Olá"
+
+### Requirement: Empty message rejection
+The system MUST NOT send a message that is empty or consists only of whitespace (spaces, tabs, newlines). The Send button MUST be disabled while the input has no non-whitespace content, and pressing Enter in that state MUST do nothing.
+
+#### Scenario: Empty input
+- **WHEN** the input is empty
+- **THEN** the Send button is disabled
+- **AND** pressing Enter sends nothing and adds nothing to the conversation
+
+#### Scenario: Whitespace-only input
+- **WHEN** the input contains only spaces and newlines and the user presses Enter or attempts to click Send
+- **THEN** no message is added to the conversation and no reply is generated
+
+### Requirement: Maximum message length
+The system SHALL enforce a configurable maximum message length, defaulting to 500 characters. The chat screen MUST display a live character counter in the form `<current>/<max>` and MUST show a pt-BR feedback message and disable sending while the input exceeds the maximum. The limit MUST also be enforced server-side, independent of the UI state.
+
+#### Scenario: Counter updates while typing
+- **WHEN** a user types 42 characters with the default configuration
+- **THEN** the counter shows `42/500`
+
+#### Scenario: Over-limit input blocks sending
+- **WHEN** the input contains 501 characters with the default configuration
+- **THEN** the counter is shown in an error state
+- **AND** a pt-BR message explains the 500-character limit
+- **AND** the Send button is disabled and pressing Enter sends nothing
+
+#### Scenario: Exactly at the limit is allowed
+- **WHEN** the input contains exactly 500 characters with the default configuration
+- **THEN** the message can be sent
+
+#### Scenario: Configured limit is respected
+- **WHEN** the maximum length is configured to 200
+- **THEN** the counter shows `<current>/200` and messages over 200 characters cannot be sent
+
+#### Scenario: Server-side enforcement
+- **WHEN** a send request reaches the server with a message longer than the configured maximum
+- **THEN** the message is rejected and not added to the conversation
+
+### Requirement: Streamed assistant reply
+After a user message is sent, the system SHALL produce an assistant reply that appears in the message list incrementally (streamed) until complete. In this change the reply MUST be simulated, in pt-BR, without calling any external AI service, and MUST make clear it is a simulated reply.
+
+#### Scenario: Reply streams incrementally
+- **WHEN** a user sends a valid message
+- **THEN** an assistant message appears and its text grows in several visible increments until the reply is complete
+
+#### Scenario: Simulated reply makes no external calls
+- **WHEN** an assistant reply is generated
+- **THEN** no network request is made to any AI provider
+
+#### Scenario: Simulated reply is identified as such
+- **WHEN** a simulated reply completes
+- **THEN** its text, in pt-BR, indicates that it is a simulated demonstration reply
+
+### Requirement: Generating indicator
+While an assistant reply is in progress, the chat screen SHALL display a "generating" indicator in pt-BR, exposed to assistive technology, and MUST remove it when the reply completes, is stopped, or fails.
+
+#### Scenario: Indicator visible during generation
+- **WHEN** a reply is in progress
+- **THEN** a pt-BR "generating" indicator is visible and announced to screen readers
+
+#### Scenario: Indicator removed on completion
+- **WHEN** the reply completes
+- **THEN** the indicator is no longer shown
+
+### Requirement: Sending blocked during reply
+While an assistant reply is in progress, the system MUST NOT accept a new message: the Send button and suggested-question chips MUST be disabled and pressing Enter MUST NOT send. The user MAY continue typing in the input. Sending MUST be re-enabled once the reply completes, is stopped, or fails.
+
+#### Scenario: Send disabled while generating
+- **WHEN** a reply is in progress and the input contains a valid message
+- **THEN** the Send button is disabled and pressing Enter does not send
+
+#### Scenario: Typing allowed while generating
+- **WHEN** a reply is in progress
+- **THEN** the user can type in the input and the counter updates
+
+#### Scenario: Sending re-enabled after completion
+- **WHEN** the reply completes and the input contains a valid message
+- **THEN** the Send button is enabled
+
+#### Scenario: Concurrent send rejected server-side
+- **WHEN** a second send reaches the server while a reply is still in progress
+- **THEN** the second message is rejected and not added to the conversation
+
+### Requirement: Stop reply in progress
+While an assistant reply is in progress, the chat screen SHALL show a Stop button. Activating it MUST end generation promptly, keep any text already streamed in the assistant message, mark that message as interrupted in pt-BR, remove the generating indicator, and re-enable sending. The Stop button MUST NOT be shown when no reply is in progress.
+
+#### Scenario: Stop keeps partial text
+- **WHEN** a user clicks Stop after part of the reply has streamed
+- **THEN** no further text is appended to the assistant message
+- **AND** the already-streamed text remains visible with a pt-BR "interrupted" marker
+- **AND** sending is re-enabled
+
+#### Scenario: Stop before any text
+- **WHEN** a user clicks Stop before any reply text has streamed
+- **THEN** the assistant message shows only the pt-BR "interrupted" marker
+
+#### Scenario: Stop hidden when idle
+- **WHEN** no reply is in progress
+- **THEN** the Stop button is not shown
+
+### Requirement: Reply failure handling
+If generating an assistant reply fails, the system SHALL show a pt-BR error message in place of (or appended to) the assistant message, remove the generating indicator, keep the conversation history intact, and re-enable sending. Internal error details MUST NOT be shown to the user.
+
+#### Scenario: Generation error
+- **WHEN** reply generation throws an error
+- **THEN** a generic pt-BR error message is shown for that reply
+- **AND** earlier messages remain in the list
+- **AND** the user can send a new message
+
+### Requirement: New conversation
+The chat screen SHALL provide a "New conversation" button that clears the entire conversation history for the current session and returns the screen to its empty state (showing suggested questions). If a reply is in progress, it MUST be stopped before clearing. The input content MUST be cleared as well.
+
+#### Scenario: Clear history
+- **WHEN** a user with several messages clicks "New conversation"
+- **THEN** the message list becomes empty
+- **AND** the suggested-question chips are shown again
+
+#### Scenario: Clear during generation
+- **WHEN** a user clicks "New conversation" while a reply is in progress
+- **THEN** generation stops, the history is cleared, and no text from the stopped reply reappears afterwards
+
+### Requirement: Suggested questions
+When the conversation is empty, the chat screen SHALL display clickable chips with configured suggested questions in pt-BR about the policy. Clicking a chip MUST send that question as a user message, subject to the same rules as typed messages. The chips MUST be hidden once the conversation has at least one message.
+
+#### Scenario: Chips shown on empty conversation
+- **WHEN** a visitor opens the chat screen with no messages
+- **THEN** the configured suggested questions are displayed as clickable chips
+
+#### Scenario: Clicking a chip sends the question
+- **WHEN** a user clicks the chip "Como funciona a garantia?"
+- **THEN** "Como funciona a garantia?" is added as a user message and a reply starts streaming
+- **AND** the chips are hidden
+
+#### Scenario: No chips configured
+- **WHEN** no suggested questions are configured
+- **THEN** no chips are displayed and the chat remains usable
+
+### Requirement: Session-scoped in-memory history
+Conversation history SHALL be kept only in server memory and scoped to the visitor's interactive session (one per browser tab connection). History MUST NOT be shared between sessions, MUST NOT be persisted to any storage, and is discarded when the session ends (for example, page reload). No sign-in is required to use the chat.
+
+#### Scenario: Separate tabs are independent
+- **WHEN** a visitor opens the chat in two browser tabs and sends a message in the first
+- **THEN** the second tab's conversation is unaffected
+
+#### Scenario: Reload starts fresh
+- **WHEN** a visitor reloads the page after chatting
+- **THEN** the chat screen shows an empty conversation with suggested questions
+
+#### Scenario: No authentication required
+- **WHEN** an anonymous visitor opens the chat screen
+- **THEN** they can send messages without signing in
+
+### Requirement: Portuguese (pt-BR) interface
+All user-facing chat text (labels, buttons, placeholders, notices, indicators, validation and error messages, suggested questions, simulated replies) SHALL be in Brazilian Portuguese, and the page MUST declare its language as `pt-BR`.
+
+#### Scenario: Page language declared
+- **WHEN** the chat page is rendered
+- **THEN** the document language is `pt-BR`
+
+#### Scenario: Controls labeled in pt-BR
+- **WHEN** a visitor views the chat screen
+- **THEN** the Send, Stop, and New conversation controls and the input placeholder are labeled in pt-BR
