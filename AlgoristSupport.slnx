@@ -1,4 +1,11 @@
 <Solution>
+  <Folder Name="/root/">
+    <File Path=".github/workflows/main_algorist-support.yml" />
+    <File Path=".gitignore" />
+    <File Path="docs/policy.md" />
+    <File Path="LICENSE" />
+    <File Path="README.md" />
+  </Folder>
   <Project Path="AlgoristSupport.Tests/AlgoristSupport.Tests.csproj" />
   <Project Path="AlgoristSupport/AlgoristSupport.csproj" />
 </Solution>

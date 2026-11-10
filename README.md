@@ -1,21 +1,9 @@
-# algorist-support
-Algorist Support Demo App
+# Algorist Support Demo App
 
-A pt-BR support chat demo (Blazor Web App, .NET 10, Interactive Server). The assistant will eventually answer
-only from the fictional policy in [`docs/policy.md`](docs/policy.md). In the current version replies are
-**simulated** (streamed canned text, no AI calls).
+A pt-BR support chat demo (Blazor Web App, .NET 10, Interactive Server).
+The assistant will eventually answer only from the fictional policy in [`docs/policy.md`](docs/policy.md).
+In the current version replies are **simulated** (streamed canned text, no AI calls).
 
-## Run
-
-```bash
-dotnet run --project AlgoristSupport
-```
-
-Then open the URL printed in the console. Run the tests with:
-
-```bash
-dotnet test AlgoristSupport.slnx
-```
 
 ## Chat features
 
