@@ -20,14 +20,7 @@ public sealed class SupportChatOptions
 
     public string[] SuggestedQuestions { get; set; } = [];
 
-    public SimulationOptions Simulation { get; set; } = new();
-
-    public sealed class SimulationOptions
-    {
-        [Range(0, 10_000)]
-        public int InitialDelayMs { get; set; } = 400;
-
-        [Range(0, 5_000)]
-        public int ChunkDelayMs { get; set; } = 60;
-    }
+    /// <summary>A reply not completed within this time is cancelled and shown as failed.</summary>
+    [Range(1, 600)]
+    public int ReplyTimeoutSeconds { get; set; } = 30;
 }

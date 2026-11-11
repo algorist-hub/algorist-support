@@ -7,6 +7,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
+using Microsoft.Extensions.Time.Testing;
 
 namespace AlgoristSupport.Tests.Components;
 
@@ -15,12 +16,15 @@ public class ChatComponentTests : BunitContext
     private static readonly string[] Suggestions = ["Como funciona a garantia?", "Quais serviços a Algorist oferece?"];
 
     private readonly FakeChatClient client = new();
+    private readonly FakeTimeProvider time = new();
 
     public ChatComponentTests ()
     {
         JSInterop.Mode = JSRuntimeMode.Loose;
         Services.AddSingleton(typeof(ILogger<>), typeof(NullLogger<>));
         Services.AddSingleton<IChatClient>(client);
+        Services.AddSingleton<TimeProvider>(time);
+        Services.AddSingleton(TestChat.Available());
         Services.AddSingleton(Options.Create(new SupportChatOptions
         {
             AssistantName = "Assistente Teste",
@@ -222,9 +226,9 @@ public class ChatComponentTests : BunitContext
         });
 
         client.Push("Resposta ");
-        client.Push("simulada.");
+        client.Push("gerada.");
         cut.WaitForAssertion(() =>
-            Assert.Equal("Resposta simulada.", cut.Find(".chat-message-assistant .chat-text").TextContent));
+            Assert.Equal("Resposta gerada.", cut.Find(".chat-message-assistant .chat-text").TextContent));
 
         client.Complete();
         cut.WaitForAssertion(() =>
@@ -268,5 +272,132 @@ public class ChatComponentTests : BunitContext
             Assert.Empty(cut.FindAll(".chat-message"));
             Assert.Equal(Suggestions.Length, cut.FindAll(".chat-chip").Count);
         });
+    }
+
+    // ---- Maintenance mode ------------------------------------------------------------------------------------
+
+    [Fact]
+    public void Maintenance_mode_shows_message_and_no_way_to_send ()
+    {
+        Services.AddSingleton(TestChat.Unavailable());
+
+        var cut = Render<ChatPanel>();
+
+        Assert.Contains("O chat está em manutenção", cut.Find(".chat-maintenance").TextContent);
+        Assert.Equal("alert", cut.Find(".chat-maintenance").GetAttribute("role"));
+        Assert.Equal("Assistente Teste", cut.Find("h1").TextContent);
+        Assert.Contains("demonstração", cut.Find(".chat-notice").TextContent);
+        Assert.Empty(cut.FindAll("textarea"));
+        Assert.Empty(cut.FindAll(".chat-send"));
+        Assert.Empty(cut.FindAll(".chat-chip"));
+        Assert.Empty(client.Requests);
+    }
+
+    /// <summary>Waits until the reply finished and the panel re-rendered, so element handles are not stale.</summary>
+    private static void WaitUntilIdleWithMessages (IRenderedComponent<ChatPanel> cut, int count) =>
+        cut.WaitForAssertion(() =>
+        {
+            Assert.Equal(count, cut.FindAll(".chat-message").Count);
+            Assert.Empty(cut.FindAll(".chat-stop"));
+            Assert.DoesNotContain("Gerando resposta", cut.Find("[role=status]").TextContent);
+        });
+
+    /// <summary>
+    /// Types and submits, retrying if a trailing render (after the previous send's handler completed) made the
+    /// element handles stale.
+    /// </summary>
+    private static void TypeAndSubmit (IRenderedComponent<ChatPanel> cut, string text) =>
+        cut.WaitForAssertion(() =>
+        {
+            cut.Find("textarea").Input(text);
+            cut.Find("form").Submit();
+        });
+
+    // ---- Per-minute limit ------------------------------------------------------------------------------------
+
+    [Fact]
+    public void Rate_limited_message_stays_in_input_and_notice_is_shown ()
+    {
+        Services.AddSingleton(TestChat.Available(maxPerMinute: 1));
+        client.AutoReply = ["ok"];
+        var cut = Render<ChatPanel>();
+        cut.Find("textarea").Input("Primeira");
+        cut.Find("form").Submit();
+        WaitUntilIdleWithMessages(cut, 2);
+
+        TypeAndSubmit(cut, "Segunda");
+
+        cut.WaitForAssertion(() =>
+        {
+            Assert.Contains("limite de 1 mensagens por minuto", cut.Find(".chat-limit-notice").TextContent);
+            Assert.Equal("Segunda", cut.Find("textarea").GetAttribute("value"));
+            Assert.Equal(2, cut.FindAll(".chat-message").Count);
+        });
+        Assert.Single(client.Requests);
+    }
+
+    [Fact]
+    public void Suggested_question_counts_towards_the_limit ()
+    {
+        Services.AddSingleton(TestChat.Available(maxPerMinute: 1));
+        client.AutoReply = ["ok"];
+        var cut = Render<ChatPanel>();
+        cut.FindAll(".chat-chip")[0].Click();
+        WaitUntilIdleWithMessages(cut, 2);
+
+        TypeAndSubmit(cut, "Outra pergunta");
+
+        cut.WaitForAssertion(() => Assert.NotEmpty(cut.FindAll(".chat-limit-notice")));
+        Assert.Single(client.Requests);
+    }
+
+    // ---- Try again -------------------------------------------------------------------------------------------
+
+    [Fact]
+    public void Retry_button_shown_only_on_last_failed_entry_when_allowed ()
+    {
+        IReadOnlyList<ChatEntry> entries =
+        [
+            new(ChatRole.User, "P1", ChatEntryStatus.Complete),
+            new(ChatRole.Assistant, string.Empty, ChatEntryStatus.Failed),
+            new(ChatRole.User, "P2", ChatEntryStatus.Complete),
+            new(ChatRole.Assistant, string.Empty, ChatEntryStatus.Failed),
+        ];
+
+        var allowed = Render<ChatMessageList>(p => p
+            .Add(x => x.Entries, entries)
+            .Add(x => x.AssistantName, "Assistente Teste")
+            .Add(x => x.CanRetry, true));
+        var notAllowed = Render<ChatMessageList>(p => p
+            .Add(x => x.Entries, entries)
+            .Add(x => x.AssistantName, "Assistente Teste")
+            .Add(x => x.CanRetry, false));
+
+        var button = Assert.Single(allowed.FindAll(".chat-retry"));
+        Assert.Equal("Tentar novamente", button.TextContent);
+        Assert.Same(allowed.FindAll(".chat-message")[3], button.Closest(".chat-message"));
+        Assert.Empty(notAllowed.FindAll(".chat-retry"));
+    }
+
+    [Fact]
+    public void Clicking_retry_streams_a_new_reply_for_the_same_question ()
+    {
+        var cut = Render<ChatPanel>();
+        cut.Find("textarea").Input("Pergunta");
+        cut.Find("form").Submit();
+        client.Fail(new InvalidOperationException("boom"));
+        cut.WaitForAssertion(() => Assert.Single(cut.FindAll(".chat-retry")));
+
+        client.AutoReply = ["Nova resposta"];
+        cut.Find(".chat-retry").Click();
+
+        cut.WaitForAssertion(() =>
+        {
+            Assert.Equal("Nova resposta", cut.Find(".chat-message-assistant .chat-text").TextContent);
+            Assert.Single(cut.FindAll(".chat-message-user"));
+            Assert.Empty(cut.FindAll(".chat-retry"));
+            Assert.Empty(cut.FindAll(".chat-status-error"));
+        });
+        Assert.Equal(2, client.Requests.Count);
     }
 }
