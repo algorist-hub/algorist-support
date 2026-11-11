@@ -6,35 +6,53 @@
 <section class="chat-panel" aria-label="Chat de suporte">
     <ChatHeader AssistantName="@Options.AssistantName" OnNewConversation="NewConversation" />
 
-    <div class="chat-scroll" @ref="scrollElement">
-        @if (Session.Entries.Count == 0)
-        {
-            <div class="chat-empty">
-                <p class="chat-welcome">Olá! Faça uma pergunta sobre a política de prestação de serviços da Algorist.</p>
-                <SuggestedQuestions Questions="Options.SuggestedQuestions"
-                                    Disabled="Session.IsGenerating"
-                                    OnSelect="SendSuggestionAsync" />
-            </div>
-        }
-        else
-        {
-            <ChatMessageList Entries="Session.Entries" AssistantName="@Options.AssistantName" />
-        }
-    </div>
+    @if (!Session.IsAvailable)
+    {
+        <div class="chat-maintenance" role="alert">
+            <p class="chat-maintenance-title">O chat está em manutenção.</p>
+            <p class="chat-maintenance-text">Tente novamente mais tarde.</p>
+        </div>
+    }
+    else
+    {
+        <div class="chat-scroll" @ref="scrollElement">
+            @if (Session.Entries.Count == 0)
+            {
+                <div class="chat-empty">
+                    <p class="chat-welcome">Olá! Faça uma pergunta sobre a política de prestação de serviços da Algorist.</p>
+                    <SuggestedQuestions Questions="Options.SuggestedQuestions"
+                                        Disabled="Session.IsGenerating"
+                                        OnSelect="SendSuggestionAsync" />
+                </div>
+            }
+            else
+            {
+                <ChatMessageList Entries="Session.Entries"
+                                 AssistantName="@Options.AssistantName"
+                                 CanRetry="Session.CanRetry"
+                                 OnRetry="RetryAsync" />
+            }
+        </div>
 
-    <div class="chat-generating" role="status" aria-live="polite">
-        @if (Session.IsGenerating)
-        {
-            <span class="chat-dots" aria-hidden="true"><span></span><span></span><span></span></span>
-            <span>Gerando resposta…</span>
-        }
-    </div>
+        <div class="chat-generating" role="status" aria-live="polite">
+            @if (Session.IsGenerating)
+            {
+                <span class="chat-dots" aria-hidden="true"><span></span><span></span><span></span></span>
+                <span>Gerando resposta…</span>
+            }
+        </div>
 
-    <ChatComposer @bind-Value="draft"
-                  MaxLength="Session.MaxMessageLength"
-                  IsGenerating="Session.IsGenerating"
-                  OnSend="SendDraftAsync"
-                  OnStop="Session.Stop" />
+        @if (Session.Notice is { } notice)
+        {
+            <p class="chat-limit-notice" role="alert">@notice</p>
+        }
+
+        <ChatComposer @bind-Value="draft"
+                      MaxLength="Session.MaxMessageLength"
+                      IsGenerating="Session.IsGenerating"
+                      OnSend="SendDraftAsync"
+                      OnStop="Session.Stop" />
+    }
 </section>
 
 @code {
@@ -57,7 +75,7 @@
         // Keep the latest message in view when a message is added or the streamed reply grows.
         var last = Session.Entries.Count > 0 ? Session.Entries[^1] : null;
         var state = (Session.Entries.Count, last?.Length ?? 0, last?.Status, Session.IsGenerating);
-        if (state != lastScrollState && module is not null)
+        if (state != lastScrollState && module is not null && Session.IsAvailable)
         {
             lastScrollState = state;
             await module.InvokeVoidAsync("scrollToBottom", scrollElement);
@@ -66,17 +84,20 @@
 
     private async Task SendDraftAsync ()
     {
-        var text = draft;
-        if (!Session.CanSend(text))
+        var attempt = Session.Send(draft);
+
+        // Clear the input only when the message was accepted (e.g. a rate-limited message stays editable).
+        if (attempt.IsAccepted)
         {
-            return;
+            draft = string.Empty;
         }
 
-        draft = string.Empty;
-        await Session.SendAsync(text);
+        await attempt.Completion;
     }
 
     private Task SendSuggestionAsync (string question) => Session.SendAsync(question);
+
+    private Task RetryAsync () => Session.RetryAsync();
 
     private void NewConversation ()
     {

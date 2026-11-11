@@ -15,6 +15,10 @@
                 else if (entry.Status == ChatEntryStatus.Failed)
                 {
                     <span class="chat-status chat-status-error">Desculpe, não foi possível gerar a resposta. Tente novamente.</span>
+                    @if (CanRetry && ReferenceEquals(entry, Entries[^1]))
+                    {
+                        <button type="button" class="btn btn-outline-primary btn-sm chat-retry" @onclick="OnRetry">Tentar novamente</button>
+                    }
                 }
             </div>
         </li>
@@ -27,4 +31,11 @@
 
     [Parameter, EditorRequired]
     public string AssistantName { get; set; } = string.Empty;
+
+    /// <summary>When true, the last entry (if it is a failed reply) shows the "Tentar novamente" button.</summary>
+    [Parameter]
+    public bool CanRetry { get; set; }
+
+    [Parameter]
+    public EventCallback OnRetry { get; set; }
 }

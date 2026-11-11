@@ -1,6 +1,5 @@
 using AlgoristSupport.Chat;
 using AlgoristSupport.Components;
-using Microsoft.Extensions.AI;
 
 namespace AlgoristSupport
 {
@@ -14,17 +13,23 @@ namespace AlgoristSupport
             builder.Services.AddRazorComponents()
                 .AddInteractiveServerComponents();
 
-            // Support chat: options, reply source (simulated for now) and per-circuit session state.
+            // Support chat UI options (section "Chat").
             builder.Services.AddOptions<SupportChatOptions>()
                 .Bind(builder.Configuration.GetSection(SupportChatOptions.SectionName))
                 .ValidateDataAnnotations()
-                .Validate(o => o.Simulation is { InitialDelayMs: >= 0, ChunkDelayMs: >= 0 },
-                    "Chat:Simulation delays must be zero or positive.")
                 .ValidateOnStart();
-            builder.Services.AddSingleton<IChatClient, SimulatedChatClient>();
+
+            // AI provider settings come from flat keys (user secrets / environment variables); when any is missing or
+            // invalid the app still starts and the chat shows a maintenance message.
+            var availability = ChatAvailability.FromConfiguration(builder.Configuration);
+            builder.Services.AddSingleton(availability);
+            builder.Services.AddSingleton(TimeProvider.System);
+            builder.Services.AddSupportChatClient(availability);
             builder.Services.AddScoped<ChatSession>();
 
             var app = builder.Build();
+
+            availability.LogStatus(app.Services.GetRequiredService<ILoggerFactory>().CreateLogger("AlgoristSupport.Chat.Configuration"));
 
             // Configure the HTTP request pipeline.
             if (!app.Environment.IsDevelopment())

@@ -14,6 +14,11 @@ internal sealed class FakeChatClient : IChatClient
 
     public List<IReadOnlyList<ChatMessage>> Requests { get; } = [];
 
+    public List<ChatOptions?> RequestOptions { get; } = [];
+
+    /// <summary>Optional updates (e.g. usage) yielded after the text chunks of an auto reply.</summary>
+    public List<ChatResponseUpdate> AutoReplyExtras { get; } = [];
+
     /// <summary>When set, each request immediately streams these chunks and completes.</summary>
     public string[]? AutoReply { get; set; }
 
@@ -29,6 +34,7 @@ internal sealed class FakeChatClient : IChatClient
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         Requests.Add(messages.ToList());
+        RequestOptions.Add(options);
 
         if (AutoReply is not null)
         {
@@ -36,6 +42,11 @@ internal sealed class FakeChatClient : IChatClient
             {
                 await Task.Yield();
                 yield return new ChatResponseUpdate(ChatRole.Assistant, chunk);
+            }
+
+            foreach (var extra in AutoReplyExtras)
+            {
+                yield return extra;
             }
 
             yield break;

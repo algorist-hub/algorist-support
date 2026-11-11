@@ -1,5 +1,26 @@
 schema: spec-driven
 
+context: |
+  Write all artifacts in English
+  This is a portfolio app to demonstrate technical skills of the author
+  The CI/CD pipeline in GitHub Actions deploys to Azure App Service
+  The tech stack is C# 14 on .NET 10, with Blazor (Server)
+  This is a basic Support Chat App
+
+rules:
+  proposal:
+    - Keep proposals under 500 words
+  tasks:
+    - Break tasks into chunks of max 30 minutes
+
+# operations:
+#   apply:
+#     guidance:
+#       - "UNIT MODE: applies ONLY if the user's apply command includes `unit` (e.g. `/opsx:apply my-change unit`)"
+#       - "In UNIT MODE: a unit is a top-level group in tasks.md (1., 2., ...); sub-tasks (1.1, 2.1, 2.2...) are NOT units. Implement ONLY the sub-tasks of the first unmarked checkbox group, run `dotnet build` and `dotnet test` (they must pass), mark the checkboxes, then STOP. Do not start any other group"
+#       - "Commands without `unit` (e.g. `/opsx:apply my-change`): ignore UNIT MODE and implement all pending tasks in order, as usual"
+#       - Never create git commits.
+
 # Project context (optional)
 # Add only constraints that should guide OpenSpec artifacts and workflows.
 # Include constraints an agent cannot infer by reading the code.

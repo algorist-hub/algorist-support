@@ -51,3 +51,7 @@
     color: #b02a37;
     font-style: normal;
 }
+
+.chat-retry {
+    align-self: flex-start;
+}
