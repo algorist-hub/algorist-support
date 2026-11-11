@@ -51,6 +51,19 @@ public class ChatComponentTests : BunitContext
         Assert.Contains("Nova conversa", button.TextContent);
     }
 
+    [Fact]
+    public void Header_notice_links_to_policy_page_in_a_new_window ()
+    {
+        var cut = Render<ChatHeader>(p => p.Add(x => x.AssistantName, "Assistente Teste"));
+
+        var link = cut.Find(".chat-notice a");
+        Assert.Equal("politica", link.GetAttribute("href"));
+        Assert.Equal("_blank", link.GetAttribute("target"));
+        Assert.Equal("noopener noreferrer", link.GetAttribute("rel"));
+        Assert.Equal("política fictícia (abre em nova janela)", link.TextContent);
+        Assert.Equal(" (abre em nova janela)", link.QuerySelector(".visually-hidden")!.TextContent);
+    }
+
     // ---- Message list ----------------------------------------------------------------------------------------
 
     [Fact]
@@ -326,6 +339,18 @@ public class ChatComponentTests : BunitContext
     // ---- Maintenance mode ------------------------------------------------------------------------------------
 
     [Fact]
+    public void Missing_policy_puts_chat_in_maintenance_with_policy_link_still_shown ()
+    {
+        Services.AddSingleton(TestChat.WithoutPolicy());
+
+        var cut = Render<ChatPanel>();
+
+        Assert.Contains("O chat está em manutenção", cut.Find(".chat-maintenance").TextContent);
+        Assert.Empty(cut.FindAll("textarea"));
+        Assert.Equal("politica", cut.Find(".chat-notice a").GetAttribute("href"));
+    }
+
+    [Fact]
     public void Maintenance_mode_shows_message_and_no_way_to_send ()
     {
         Services.AddSingleton(TestChat.Unavailable());
@@ -336,6 +361,7 @@ public class ChatComponentTests : BunitContext
         Assert.Equal("alert", cut.Find(".chat-maintenance").GetAttribute("role"));
         Assert.Equal("Assistente Teste", cut.Find("h1").TextContent);
         Assert.Contains("demonstração", cut.Find(".chat-notice").TextContent);
+        Assert.Equal("politica", cut.Find(".chat-notice a").GetAttribute("href"));
         Assert.Empty(cut.FindAll("textarea"));
         Assert.Empty(cut.FindAll(".chat-send"));
         Assert.Empty(cut.FindAll(".chat-chip"));

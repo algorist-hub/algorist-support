@@ -252,6 +252,17 @@ public class ChatSessionTests
     // ---- Maintenance mode (task 2.3) -------------------------------------------------------------------------
 
     [Fact]
+    public async Task Session_without_policy_is_unavailable_and_calls_no_provider ()
+    {
+        var session = CreateSession(availability: TestChat.WithoutPolicy());
+
+        Assert.False(session.IsAvailable);
+        Assert.Equal(SendOutcome.Unavailable, await session.SendAsync("Pergunta"));
+        Assert.Empty(session.Entries);
+        Assert.Empty(client.Requests);
+    }
+
+    [Fact]
     public async Task Unavailable_session_rejects_sends_without_calling_the_provider ()
     {
         var session = CreateSession(availability: TestChat.Unavailable());
@@ -277,7 +288,7 @@ public class ChatSessionTests
 
         var request = client.Requests.Single();
         Assert.Equal(ChatRole.System, request[0].Role);
-        Assert.Equal(SupportAssistantPrompt.Text, request[0].Text);
+        Assert.Equal(SupportAssistantPrompt.Build(new PolicyDocument(TestChat.PolicyMarkdown)), request[0].Text);
         Assert.Single(request, m => m.Role == ChatRole.System);
         Assert.All(request.Where(m => m.Text.Contains(injection)), m => Assert.Equal(ChatRole.User, m.Role));
     }
@@ -470,6 +481,30 @@ public class ChatSessionTests
 
         Assert.Equal(["Pergunta", "Agora sim"], session.Entries.Select(e => e.Text));
         Assert.Equal(ChatEntryStatus.Complete, session.Entries[^1].Status);
+    }
+
+    // ---- Policy grounding (add-policy-grounding 3.3) ---------------------------------------------------------
+
+    [Fact]
+    public async Task Send_and_retry_requests_carry_the_policy_and_grounding_rules ()
+    {
+        AutoReplyWithoutText();
+        var session = CreateSession();
+        await session.SendAsync("Qual é o prazo de garantia?");
+        client.AutoReplyExtras.Clear();
+        client.AutoReply = ["90 dias"];
+        await session.RetryAsync();
+
+        Assert.Equal(2, client.Requests.Count);
+        Assert.All(client.Requests, request =>
+        {
+            var system = Assert.Single(request, m => m.Role == ChatRole.System);
+            Assert.Same(system, request[0]);
+            Assert.Contains(TestChat.PolicyMarkdown, system.Text);
+            Assert.Contains(SupportAssistantPrompt.AnswerOnlyFromPolicy, system.Text);
+            Assert.Contains(SupportAssistantPrompt.DeclineOffTopic, system.Text);
+            Assert.DoesNotContain("Qual é o prazo de garantia?", system.Text);
+        });
     }
 
     // ---- Retry (task 5.2) ------------------------------------------------------------------------------------

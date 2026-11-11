@@ -12,8 +12,8 @@
                     }
                     else
                     {
-                        @* Assistant replies are Markdown; ChatMarkdown escapes raw HTML and drops unsafe URLs. *@
-                        <div class="chat-text chat-markdown">@ChatMarkdown.ToHtml(entry.Text)</div>
+                        @* Assistant replies are Markdown; SafeMarkdown escapes raw HTML and drops unsafe URLs. *@
+                        <div class="chat-text chat-markdown">@SafeMarkdown.ToHtml(entry.Text)</div>
                     }
                 }
                 @if (entry.Status == ChatEntryStatus.Interrupted)

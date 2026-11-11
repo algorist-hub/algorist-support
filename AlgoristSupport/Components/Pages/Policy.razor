@@ -1,0 +1,19 @@
+@page "/politica"
+@inject PolicyLoadResult PolicyResult
+
+<PageTitle>Política (fictícia) — Algorist</PageTitle>
+
+@if (PolicyResult.Document is { } document)
+{
+    @* Same document the assistant answers from (docs/policy.md, loaded once at startup). *@
+    <article class="policy">
+        @SafeMarkdown.ToHtml(document.Markdown, headingIds: true)
+    </article>
+}
+else
+{
+    <section class="policy policy-unavailable" role="alert">
+        <h1>Política indisponível</h1>
+        <p>A política está temporariamente indisponível. Tente novamente mais tarde.</p>
+    </section>
+}

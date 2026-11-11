@@ -5,6 +5,8 @@ namespace AlgoristSupport.Tests.Chat;
 
 public class ChatHistoryBuilderTests
 {
+    private static readonly string Prompt = SupportAssistantPrompt.Build(new PolicyDocument(TestChat.PolicyMarkdown));
+
     private static ChatEntry User (string text) => new(ChatRole.User, text, ChatEntryStatus.Complete);
 
     private static ChatEntry Reply (string text, ChatEntryStatus status = ChatEntryStatus.Complete) =>
@@ -16,10 +18,11 @@ public class ChatHistoryBuilderTests
     [Fact]
     public void System_message_first_then_last_N_exchanges_then_current ()
     {
-        var messages = ChatHistoryBuilder.Build(ThreeExchanges, "P4", maxExchanges: 2);
+        var messages = ChatHistoryBuilder.Build(Prompt, ThreeExchanges, "P4", maxExchanges: 2);
 
         Assert.Equal(ChatRole.System, messages[0].Role);
-        Assert.Equal(SupportAssistantPrompt.Text, messages[0].Text);
+        Assert.Equal(Prompt, messages[0].Text);
+        Assert.DoesNotContain("P4", messages[0].Text);
         Assert.Equal(["P2", "R2", "P3", "R3", "P4"], messages.Skip(1).Select(m => m.Text));
         Assert.Equal(
             [ChatRole.User, ChatRole.Assistant, ChatRole.User, ChatRole.Assistant, ChatRole.User],
@@ -29,7 +32,7 @@ public class ChatHistoryBuilderTests
     [Fact]
     public void Zero_exchanges_sends_only_system_and_current ()
     {
-        var messages = ChatHistoryBuilder.Build(ThreeExchanges, "P4", maxExchanges: 0);
+        var messages = ChatHistoryBuilder.Build(Prompt, ThreeExchanges, "P4", maxExchanges: 0);
 
         Assert.Equal([ChatRole.System, ChatRole.User], messages.Select(m => m.Role));
         Assert.Equal("P4", messages[1].Text);
@@ -38,7 +41,7 @@ public class ChatHistoryBuilderTests
     [Fact]
     public void N_larger_than_history_sends_everything ()
     {
-        var messages = ChatHistoryBuilder.Build(ThreeExchanges, "P4", maxExchanges: 10);
+        var messages = ChatHistoryBuilder.Build(Prompt, ThreeExchanges, "P4", maxExchanges: 10);
 
         Assert.Equal(["P1", "R1", "P2", "R2", "P3", "R3", "P4"], messages.Skip(1).Select(m => m.Text));
     }
@@ -54,7 +57,7 @@ public class ChatHistoryBuilderTests
             User("P4"), Reply("Parcial", ChatEntryStatus.Interrupted),
         ];
 
-        var messages = ChatHistoryBuilder.Build(entries, "P5", maxExchanges: 10);
+        var messages = ChatHistoryBuilder.Build(Prompt, entries, "P5", maxExchanges: 10);
 
         Assert.Equal(["P1", "R1", "P4", "Parcial", "P5"], messages.Skip(1).Select(m => m.Text));
     }
@@ -68,7 +71,7 @@ public class ChatHistoryBuilderTests
             User("P2"), Reply(string.Empty, ChatEntryStatus.Failed),
         ];
 
-        var messages = ChatHistoryBuilder.Build(entries, "P3", maxExchanges: 1);
+        var messages = ChatHistoryBuilder.Build(Prompt, entries, "P3", maxExchanges: 1);
 
         Assert.Equal(["P1", "R1", "P3"], messages.Skip(1).Select(m => m.Text));
     }
