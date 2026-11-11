@@ -8,16 +8,18 @@ namespace AlgoristSupport.Chat;
 /// </summary>
 public static class ChatHistoryBuilder
 {
+    /// <param name="systemPrompt">The full system instructions (see <see cref="SupportAssistantPrompt.Build"/>).</param>
     /// <param name="previousEntries">Conversation entries before the current user message.</param>
     /// <param name="currentUserMessage">The message being answered.</param>
     /// <param name="maxExchanges">Maximum number of previous exchanges to include (0 = none).</param>
-    public static List<ChatMessage> Build (IEnumerable<ChatEntry> previousEntries, string currentUserMessage, int maxExchanges)
+    public static List<ChatMessage> Build (string systemPrompt, IEnumerable<ChatEntry> previousEntries, string currentUserMessage, int maxExchanges)
     {
+        ArgumentException.ThrowIfNullOrWhiteSpace(systemPrompt);
         ArgumentOutOfRangeException.ThrowIfNegative(maxExchanges);
 
         var exchanges = Pair(previousEntries.ToList());
 
-        var messages = new List<ChatMessage> { SupportAssistantPrompt.CreateSystemMessage() };
+        var messages = new List<ChatMessage> { SupportAssistantPrompt.CreateSystemMessage(systemPrompt) };
         foreach (var (user, assistant) in exchanges.Skip(Math.Max(0, exchanges.Count - maxExchanges)))
         {
             messages.Add(new ChatMessage(ChatRole.User, user.Text));

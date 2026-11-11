@@ -5,6 +5,7 @@ context: |
   This is a portfolio app to demonstrate technical skills of the author
   The CI/CD pipeline in GitHub Actions deploys to Azure App Service
   The tech stack is C# 14 on .NET 10, with Blazor (Server)
+  Follow Clean Architecture and SOLID principles
   This is a basic Support Chat App
 
 rules:

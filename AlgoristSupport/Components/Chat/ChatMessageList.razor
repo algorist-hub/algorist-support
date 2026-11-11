@@ -6,7 +6,15 @@
             <div class="chat-bubble">
                 @if (entry.Length > 0)
                 {
-                    <span class="chat-text">@entry.Text</span>
+                    @if (entry.IsUser)
+                    {
+                        <span class="chat-text">@entry.Text</span>
+                    }
+                    else
+                    {
+                        @* Assistant replies are Markdown; SafeMarkdown escapes raw HTML and drops unsafe URLs. *@
+                        <div class="chat-text chat-markdown">@SafeMarkdown.ToHtml(entry.Text)</div>
+                    }
                 }
                 @if (entry.Status == ChatEntryStatus.Interrupted)
                 {

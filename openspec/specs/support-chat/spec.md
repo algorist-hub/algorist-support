@@ -7,7 +7,7 @@ Provides the end-user support chat experience in pt-BR: a chat screen where a vi
 ## Requirements
 
 ### Requirement: Chat screen header and demo notice
-The chat screen SHALL display a header containing the configured assistant name and a permanent notice, in pt-BR, stating that the assistant is an automated demo and that it answers about a fictional policy. The notice MUST remain visible at all times, regardless of conversation length or state, and MUST NOT be dismissible.
+The chat screen SHALL display a header containing the configured assistant name and a permanent notice, in pt-BR, stating that the assistant is an automated demo and that it answers about a fictional policy. The notice MUST remain visible at all times, regardless of conversation length or state, and MUST NOT be dismissible. The notice's reference to the fictional policy MUST be a link to the policy page (`/politica`) that opens in a new browser tab or window, keeping the chat and its conversation intact, and whose accessible name indicates that it opens in a new window.
 
 #### Scenario: Header shown on first load
 - **WHEN** a visitor opens the chat screen
@@ -22,8 +22,21 @@ The chat screen SHALL display a header containing the configured assistant name 
 - **WHEN** a visitor inspects the notice
 - **THEN** no control is offered to hide or close it
 
+#### Scenario: Policy link opens in a new window
+- **WHEN** a visitor activates the policy link in the notice
+- **THEN** the policy page `/politica` opens in a new browser tab or window
+- **AND** the chat tab keeps its current conversation
+
+#### Scenario: Policy link is accessible
+- **WHEN** a screen-reader user reaches the policy link
+- **THEN** its accessible name identifies the policy and states, in pt-BR, that it opens in a new window
+
+#### Scenario: Policy link available in maintenance mode
+- **WHEN** the chat is in maintenance mode
+- **THEN** the notice and its policy link are still displayed
+
 ### Requirement: Message list rendering
-The chat screen SHALL display the conversation as an ordered list of messages, oldest first, where each message is visually and semantically identified as either a user message or an assistant message. Message text MUST be rendered as plain text (no HTML interpretation) and MUST preserve line breaks entered by the user.
+The chat screen SHALL display the conversation as an ordered list of messages, oldest first, where each message is visually and semantically identified as either a user message or an assistant message. User message text MUST be rendered as plain text (no HTML or Markdown interpretation) and MUST preserve line breaks entered by the user. Assistant message text MUST be rendered as Markdown formatting (the Markdown markers themselves are not shown), with raw HTML in the reply escaped rather than interpreted and links kept only for `http`, `https` and `mailto` URLs.
 
 #### Scenario: User and assistant messages are distinguishable
 - **WHEN** the conversation contains a user message followed by an assistant reply
@@ -33,6 +46,14 @@ The chat screen SHALL display the conversation as an ordered list of messages, o
 #### Scenario: Markup in a message is shown literally
 - **WHEN** a user sends the message `<b>olá</b>`
 - **THEN** the message list shows the literal text `<b>olá</b>` and no bold formatting is applied
+
+#### Scenario: Assistant Markdown is rendered as formatting
+- **WHEN** an assistant reply contains `**Assistente Algorist**`
+- **THEN** the message list shows `Assistente Algorist` in bold and no `*` characters are displayed
+
+#### Scenario: Unsafe content in an assistant reply is neutralized
+- **WHEN** an assistant reply contains `<script>` markup or a `javascript:` link
+- **THEN** the markup is shown as literal text and the link has no `javascript:` target
 
 #### Scenario: Multi-line message preserves line breaks
 - **WHEN** a user sends a message containing two lines

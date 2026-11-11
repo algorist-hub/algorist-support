@@ -23,6 +23,7 @@ public sealed class ChatSession : IDisposable
     private readonly TimeProvider timeProvider;
     private readonly ILogger<ChatSession> logger;
     private readonly SlidingWindowCounter? rateLimiter;
+    private readonly string? systemPrompt;
     private readonly List<ChatEntry> entries = [];
     private CancellationTokenSource? currentGeneration;
 
@@ -42,6 +43,12 @@ public sealed class ChatSession : IDisposable
         if (availability.Settings is { } settings)
         {
             rateLimiter = new SlidingWindowCounter(settings.MaxMessagesPerMinute, RateWindow, timeProvider);
+        }
+
+        // Built once per circuit from the policy loaded at startup; null only in maintenance mode (nothing is sent).
+        if (availability.Policy is { } policy)
+        {
+            systemPrompt = SupportAssistantPrompt.Build(policy);
         }
     }
 
@@ -83,7 +90,7 @@ public sealed class ChatSession : IDisposable
         }
 
         var text = input!.Trim();
-        var history = ChatHistoryBuilder.Build(entries, text, availability.Settings!.MaxHistoryExchanges);
+        var history = ChatHistoryBuilder.Build(systemPrompt!, entries, text, availability.Settings!.MaxHistoryExchanges);
         entries.Add(new ChatEntry(ChatRole.User, text, ChatEntryStatus.Complete));
 
         return new SendAttempt(SendOutcome.Accepted, GenerateAsync(history));
@@ -110,7 +117,7 @@ public sealed class ChatSession : IDisposable
 
         entries.RemoveAt(entries.Count - 1);
         var userIndex = entries.Count - 1;
-        var history = ChatHistoryBuilder.Build(entries.Take(userIndex), entries[userIndex].Text, availability.Settings!.MaxHistoryExchanges);
+        var history = ChatHistoryBuilder.Build(systemPrompt!, entries.Take(userIndex), entries[userIndex].Text, availability.Settings!.MaxHistoryExchanges);
 
         return new SendAttempt(SendOutcome.Accepted, GenerateAsync(history));
     }

@@ -30,7 +30,7 @@ public class SupportChatClientFactoryTests
     public void Available_configuration_registers_provider_client_for_configured_model_and_endpoint ()
     {
         var configuration = new ConfigurationBuilder().AddInMemoryCollection(ChatProviderSettingsTests.ValidValues()).Build();
-        var services = new ServiceCollection().AddSupportChatClient(ChatAvailability.FromConfiguration(configuration));
+        var services = new ServiceCollection().AddSupportChatClient(ChatAvailability.FromConfiguration(configuration, TestChat.Policy()));
 
         using var provider = services.BuildServiceProvider();
         var client = provider.GetRequiredService<IChatClient>();

@@ -51,6 +51,19 @@ public class ChatComponentTests : BunitContext
         Assert.Contains("Nova conversa", button.TextContent);
     }
 
+    [Fact]
+    public void Header_notice_links_to_policy_page_in_a_new_window ()
+    {
+        var cut = Render<ChatHeader>(p => p.Add(x => x.AssistantName, "Assistente Teste"));
+
+        var link = cut.Find(".chat-notice a");
+        Assert.Equal("politica", link.GetAttribute("href"));
+        Assert.Equal("_blank", link.GetAttribute("target"));
+        Assert.Equal("noopener noreferrer", link.GetAttribute("rel"));
+        Assert.Equal("política fictícia (abre em nova janela)", link.TextContent);
+        Assert.Equal(" (abre em nova janela)", link.QuerySelector(".visually-hidden")!.TextContent);
+    }
+
     // ---- Message list ----------------------------------------------------------------------------------------
 
     [Fact]
@@ -74,6 +87,55 @@ public class ChatComponentTests : BunitContext
         Assert.Equal(["Você disse:", "Assistente Teste disse:"], labels);
         Assert.Single(cut.FindAll(".chat-message-user"));
         Assert.Single(cut.FindAll(".chat-message-assistant"));
+    }
+
+    [Fact]
+    public void Message_list_renders_assistant_markdown_as_formatting ()
+    {
+        IReadOnlyList<ChatEntry> entries =
+        [
+            new(ChatRole.User, "**literal**", ChatEntryStatus.Complete),
+            new(ChatRole.Assistant, "A **Algorist** oferece:\n\n- *suporte*\n- `garantia`", ChatEntryStatus.Complete),
+        ];
+
+        var cut = Render<ChatMessageList>(p => p
+            .Add(x => x.Entries, entries)
+            .Add(x => x.AssistantName, "Assistente Teste"));
+
+        // User text stays literal.
+        Assert.Equal("**literal**", cut.Find(".chat-message-user .chat-text").TextContent);
+
+        var reply = cut.Find(".chat-message-assistant .chat-text");
+        Assert.Equal("Algorist", reply.QuerySelector("strong")!.TextContent);
+        Assert.Equal("suporte", reply.QuerySelector("li em")!.TextContent);
+        Assert.Equal("garantia", reply.QuerySelector("li code")!.TextContent);
+        Assert.DoesNotContain("*", reply.TextContent);
+    }
+
+    [Fact]
+    public void Message_list_escapes_html_and_drops_unsafe_links_in_assistant_markdown ()
+    {
+        IReadOnlyList<ChatEntry> entries =
+        [
+            new(ChatRole.Assistant,
+                "<script>alert(1)</script> [ruim](javascript:alert(1)) [site](https://example.com)",
+                ChatEntryStatus.Complete),
+        ];
+
+        var cut = Render<ChatMessageList>(p => p
+            .Add(x => x.Entries, entries)
+            .Add(x => x.AssistantName, "Assistente Teste"));
+
+        var reply = cut.Find(".chat-message-assistant .chat-text");
+        Assert.Empty(reply.QuerySelectorAll("script"));
+        Assert.Contains("<script>alert(1)</script>", reply.TextContent);
+
+        var links = reply.QuerySelectorAll("a");
+        Assert.DoesNotContain(links, a => (a.GetAttribute("href") ?? "").Contains("javascript", StringComparison.OrdinalIgnoreCase));
+
+        var safe = Assert.Single(links, a => a.GetAttribute("href") == "https://example.com");
+        Assert.Equal("_blank", safe.GetAttribute("target"));
+        Assert.Equal("noopener noreferrer", safe.GetAttribute("rel"));
     }
 
     [Fact]
@@ -277,6 +339,18 @@ public class ChatComponentTests : BunitContext
     // ---- Maintenance mode ------------------------------------------------------------------------------------
 
     [Fact]
+    public void Missing_policy_puts_chat_in_maintenance_with_policy_link_still_shown ()
+    {
+        Services.AddSingleton(TestChat.WithoutPolicy());
+
+        var cut = Render<ChatPanel>();
+
+        Assert.Contains("O chat está em manutenção", cut.Find(".chat-maintenance").TextContent);
+        Assert.Empty(cut.FindAll("textarea"));
+        Assert.Equal("politica", cut.Find(".chat-notice a").GetAttribute("href"));
+    }
+
+    [Fact]
     public void Maintenance_mode_shows_message_and_no_way_to_send ()
     {
         Services.AddSingleton(TestChat.Unavailable());
@@ -287,6 +361,7 @@ public class ChatComponentTests : BunitContext
         Assert.Equal("alert", cut.Find(".chat-maintenance").GetAttribute("role"));
         Assert.Equal("Assistente Teste", cut.Find("h1").TextContent);
         Assert.Contains("demonstração", cut.Find(".chat-notice").TextContent);
+        Assert.Equal("politica", cut.Find(".chat-notice a").GetAttribute("href"));
         Assert.Empty(cut.FindAll("textarea"));
         Assert.Empty(cut.FindAll(".chat-send"));
         Assert.Empty(cut.FindAll(".chat-chip"));
