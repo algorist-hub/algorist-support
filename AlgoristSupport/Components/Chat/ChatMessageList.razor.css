@@ -41,6 +41,84 @@
     white-space: pre-wrap;
 }
 
+/* Assistant replies: line breaks come from the rendered Markdown, not from whitespace. */
+.chat-markdown {
+    white-space: normal;
+}
+
+/* Rendered Markdown has no scoped-CSS attribute, so it is styled through ::deep. */
+.chat-markdown ::deep > :first-child {
+    margin-top: 0;
+}
+
+.chat-markdown ::deep > :last-child {
+    margin-bottom: 0;
+}
+
+.chat-markdown ::deep p,
+.chat-markdown ::deep ul,
+.chat-markdown ::deep ol,
+.chat-markdown ::deep pre,
+.chat-markdown ::deep blockquote,
+.chat-markdown ::deep table {
+    margin: 0 0 0.5rem;
+}
+
+.chat-markdown ::deep ul,
+.chat-markdown ::deep ol {
+    padding-left: 1.25rem;
+}
+
+.chat-markdown ::deep h1,
+.chat-markdown ::deep h2,
+.chat-markdown ::deep h3,
+.chat-markdown ::deep h4,
+.chat-markdown ::deep h5,
+.chat-markdown ::deep h6 {
+    font-size: 1rem;
+    font-weight: 600;
+    margin: 0.5rem 0 0.25rem;
+}
+
+.chat-markdown ::deep code {
+    font-size: 0.875em;
+    background-color: rgba(0, 0, 0, 0.06);
+    padding: 0.1rem 0.25rem;
+    border-radius: 0.25rem;
+}
+
+.chat-markdown ::deep pre {
+    background-color: rgba(0, 0, 0, 0.06);
+    padding: 0.5rem;
+    border-radius: 0.4rem;
+    overflow-x: auto;
+}
+
+.chat-markdown ::deep pre code {
+    background: none;
+    padding: 0;
+}
+
+.chat-markdown ::deep blockquote {
+    border-left: 3px solid #ced4da;
+    padding-left: 0.6rem;
+    color: #495057;
+}
+
+.chat-markdown ::deep table {
+    border-collapse: collapse;
+}
+
+.chat-markdown ::deep th,
+.chat-markdown ::deep td {
+    border: 1px solid #ced4da;
+    padding: 0.2rem 0.4rem;
+}
+
+.chat-markdown ::deep img {
+    max-width: 100%;
+}
+
 .chat-status {
     font-size: 0.8rem;
     font-style: italic;

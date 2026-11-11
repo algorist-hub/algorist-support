@@ -77,6 +77,55 @@ public class ChatComponentTests : BunitContext
     }
 
     [Fact]
+    public void Message_list_renders_assistant_markdown_as_formatting ()
+    {
+        IReadOnlyList<ChatEntry> entries =
+        [
+            new(ChatRole.User, "**literal**", ChatEntryStatus.Complete),
+            new(ChatRole.Assistant, "A **Algorist** oferece:\n\n- *suporte*\n- `garantia`", ChatEntryStatus.Complete),
+        ];
+
+        var cut = Render<ChatMessageList>(p => p
+            .Add(x => x.Entries, entries)
+            .Add(x => x.AssistantName, "Assistente Teste"));
+
+        // User text stays literal.
+        Assert.Equal("**literal**", cut.Find(".chat-message-user .chat-text").TextContent);
+
+        var reply = cut.Find(".chat-message-assistant .chat-text");
+        Assert.Equal("Algorist", reply.QuerySelector("strong")!.TextContent);
+        Assert.Equal("suporte", reply.QuerySelector("li em")!.TextContent);
+        Assert.Equal("garantia", reply.QuerySelector("li code")!.TextContent);
+        Assert.DoesNotContain("*", reply.TextContent);
+    }
+
+    [Fact]
+    public void Message_list_escapes_html_and_drops_unsafe_links_in_assistant_markdown ()
+    {
+        IReadOnlyList<ChatEntry> entries =
+        [
+            new(ChatRole.Assistant,
+                "<script>alert(1)</script> [ruim](javascript:alert(1)) [site](https://example.com)",
+                ChatEntryStatus.Complete),
+        ];
+
+        var cut = Render<ChatMessageList>(p => p
+            .Add(x => x.Entries, entries)
+            .Add(x => x.AssistantName, "Assistente Teste"));
+
+        var reply = cut.Find(".chat-message-assistant .chat-text");
+        Assert.Empty(reply.QuerySelectorAll("script"));
+        Assert.Contains("<script>alert(1)</script>", reply.TextContent);
+
+        var links = reply.QuerySelectorAll("a");
+        Assert.DoesNotContain(links, a => (a.GetAttribute("href") ?? "").Contains("javascript", StringComparison.OrdinalIgnoreCase));
+
+        var safe = Assert.Single(links, a => a.GetAttribute("href") == "https://example.com");
+        Assert.Equal("_blank", safe.GetAttribute("target"));
+        Assert.Equal("noopener noreferrer", safe.GetAttribute("rel"));
+    }
+
+    [Fact]
     public void Message_list_shows_interrupted_and_failed_markers ()
     {
         IReadOnlyList<ChatEntry> entries =
