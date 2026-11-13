@@ -12,8 +12,9 @@
                     }
                     else
                     {
-                        @* Assistant replies are Markdown; SafeMarkdown escapes raw HTML and drops unsafe URLs. *@
-                        <div class="chat-text chat-markdown">@SafeMarkdown.ToHtml(entry.Text)</div>
+                        @* Assistant replies are Markdown; SafeMarkdown escapes raw HTML and drops unsafe URLs.
+                           Section citations are linked only once streaming ends, so no link points at a half-typed number. *@
+                        <div class="chat-text chat-markdown">@SafeMarkdown.ToHtml(entry.Text, citations: entry.Status == ChatEntryStatus.Streaming ? null : Sections)</div>
                     }
                 }
                 @if (entry.Status == ChatEntryStatus.Interrupted)
@@ -34,6 +35,9 @@
 </ol>
 
 @code {
+    [Inject]
+    private PolicySectionIndex Sections { get; set; } = default!;
+
     [Parameter, EditorRequired]
     public IReadOnlyList<ChatEntry> Entries { get; set; } = [];
 

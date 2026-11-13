@@ -25,6 +25,7 @@ public class ChatComponentTests : BunitContext
         Services.AddSingleton<IChatClient>(client);
         Services.AddSingleton<TimeProvider>(time);
         Services.AddSingleton(TestChat.Available());
+        Services.AddSingleton(TestChat.Sections());
         Services.AddSingleton(Options.Create(new SupportChatOptions
         {
             AssistantName = "Assistente Teste",
@@ -136,6 +137,43 @@ public class ChatComponentTests : BunitContext
         var safe = Assert.Single(links, a => a.GetAttribute("href") == "https://example.com");
         Assert.Equal("_blank", safe.GetAttribute("target"));
         Assert.Equal("noopener noreferrer", safe.GetAttribute("rel"));
+    }
+
+    [Fact]
+    public void Message_list_links_section_citations_in_finished_replies ()
+    {
+        IReadOnlyList<ChatEntry> entries =
+        [
+            new(ChatRole.Assistant, "A garantia é de 90 dias (Seção 12).", ChatEntryStatus.Complete),
+            new(ChatRole.Assistant, "Parcial (Seção 13)", ChatEntryStatus.Interrupted),
+        ];
+
+        var cut = Render<ChatMessageList>(p => p
+            .Add(x => x.Entries, entries)
+            .Add(x => x.AssistantName, "Assistente Teste"));
+
+        var links = cut.FindAll(".chat-message-assistant a.policy-citation");
+        Assert.Equal(["politica#secao-12", "politica#secao-13"], links.Select(a => a.GetAttribute("href")));
+        Assert.Equal("_blank", links[0].GetAttribute("target"));
+        Assert.Equal("Seção 12 — Garantia (abre em nova janela)", links[0].GetAttribute("aria-label"));
+    }
+
+    [Fact]
+    public void Message_list_does_not_link_citations_while_streaming_or_in_user_messages ()
+    {
+        IReadOnlyList<ChatEntry> entries =
+        [
+            new(ChatRole.User, "O que diz a Seção 12?", ChatEntryStatus.Complete),
+            new(ChatRole.Assistant, "A garantia (Seção 12)", ChatEntryStatus.Streaming),
+        ];
+
+        var cut = Render<ChatMessageList>(p => p
+            .Add(x => x.Entries, entries)
+            .Add(x => x.AssistantName, "Assistente Teste"));
+
+        Assert.Empty(cut.FindAll("a"));
+        Assert.Equal("O que diz a Seção 12?", cut.Find(".chat-message-user .chat-text").TextContent);
+        Assert.Contains("Seção 12", cut.Find(".chat-message-assistant .chat-text").TextContent);
     }
 
     [Fact]

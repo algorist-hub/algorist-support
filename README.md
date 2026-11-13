@@ -16,8 +16,8 @@ visitors can also read at `/politica`.
 - Character counter with a configurable limit (default 500); sending is blocked while a reply is in progress.
 - **Nova conversa** clears the history; suggested-question chips appear while the conversation is empty.
 - History is kept in memory per browser tab session (Blazor circuit) only: no database, no sign-in. Reloading starts fresh.
-- Assistant replies are rendered as Markdown (raw HTML escaped, only http/https/mailto links kept); user messages
-  are shown as plain text.
+- Assistant replies are rendered as Markdown (raw HTML escaped, only http/https/mailto links kept, plus the
+  app-built policy citation links below); user messages are shown as plain text.
 - Every request starts with pt-BR support-assistant instructions including a basic prompt-injection defense.
 - Per-session limits: messages per minute, output tokens per reply, and how many previous exchanges are sent.
 - A reply that fails or takes longer than 30 seconds shows a generic error and a **Tentar novamente** button.
@@ -34,6 +34,18 @@ visitors can also read at `/politica`.
 - `/politica` renders the same file as a page. Editing the policy requires a redeploy (or restart).
 - If the file is missing or empty, the chat enters maintenance mode (below), `/politica` shows an "indisponível"
   message, and a startup warning identifies the file (never its content).
+
+## Source citations
+
+- The system prompt asks the assistant to cite the policy sections it used inline as `(Seção N)`, the same style
+  as the policy's own FAQ, and not to cite anything for uncovered or off-topic questions.
+- Once a reply finishes streaming (or is stopped), citations such as `Seção 12`, `Seção 12.1` and `Seções 12 e 13`
+  become links to that section of `/politica`, opening in a new tab so the conversation is kept. The link's
+  accessible name includes the section title.
+- Links are **section-level only**: `Seção 12.1` links to section 12. A number that is not a section of the loaded
+  policy (e.g. `Seção 99`) stays plain text. Citations in user messages, code and existing links are never linked.
+- The model never writes the URLs: the app builds them from the policy's numbered headings (`## N. Title`), and
+  each numbered heading on `/politica` gets the title-independent anchor `secao-N`, highlighted when targeted.
 
 ## AI provider settings (required)
 

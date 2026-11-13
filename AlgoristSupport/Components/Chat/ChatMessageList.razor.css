@@ -115,6 +115,20 @@
     padding: 0.2rem 0.4rem;
 }
 
+/* Links to a policy section (generated from "Seção N" citations). */
+.chat-markdown ::deep a.policy-citation {
+    color: #0b5394;
+    font-weight: 500;
+    text-decoration: underline dotted;
+    text-underline-offset: 0.15em;
+    white-space: nowrap;
+}
+
+.chat-markdown ::deep a.policy-citation:hover,
+.chat-markdown ::deep a.policy-citation:focus-visible {
+    text-decoration-style: solid;
+}
+
 .chat-markdown ::deep img {
     max-width: 100%;
 }

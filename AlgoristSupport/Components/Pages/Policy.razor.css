@@ -20,6 +20,17 @@
     margin: 2rem 0 0.75rem;
     padding-bottom: 0.25rem;
     border-bottom: 1px solid #dee2e6;
+    /* Deep links (/politica#secao-N) land with breathing room above the heading. */
+    scroll-margin-top: 1.5rem;
+}
+
+/* The section opened from a chat citation. */
+.policy ::deep h2:target {
+    background-color: #fff3cd;
+    outline: 2px solid #f0ad4e;
+    outline-offset: 2px;
+    border-radius: 0.25rem;
+    padding-left: 0.4rem;
 }
 
 .policy ::deep blockquote {

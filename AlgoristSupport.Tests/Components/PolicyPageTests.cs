@@ -46,7 +46,34 @@ public class PolicyPageTests : BunitContext
     {
         var cut = RenderWith(PolicyLoadResult.Loaded("p.md", new PolicyDocument("## 12. Garantia\n\nTexto.")));
 
+        Assert.Equal("secao-12", cut.Find("h2").GetAttribute("id"));
+    }
+
+    [Fact]
+    public void Section_anchor_does_not_depend_on_the_title ()
+    {
+        var cut = RenderWith(PolicyLoadResult.Loaded("p.md", new PolicyDocument("## 12. Garantia estendida (novo título)\n\nTexto.")));
+
+        Assert.Equal("secao-12", cut.Find("h2").GetAttribute("id"));
+    }
+
+    [Fact]
+    public void Unnumbered_headings_keep_an_auto_id ()
+    {
+        var cut = RenderWith(PolicyLoadResult.Loaded("p.md", new PolicyDocument("# Política\n\n## Anexo\n\n### 3. Subitem")));
+
+        Assert.False(string.IsNullOrEmpty(cut.Find("h1").GetAttribute("id")));
         Assert.False(string.IsNullOrEmpty(cut.Find("h2").GetAttribute("id")));
+        Assert.NotEqual("secao-3", cut.Find("h3").GetAttribute("id"));
+    }
+
+    [Fact]
+    public void Shipped_policy_sections_have_numeric_anchors ()
+    {
+        var cut = RenderWith(PolicyDocumentLoader.Load(PolicyDocumentLoader.DefaultPath));
+
+        var ids = cut.FindAll("h2").Select(h => h.GetAttribute("id")).ToList();
+        Assert.Equal(Enumerable.Range(1, 21).Select(n => $"secao-{n}"), ids);
     }
 
     [Fact]
