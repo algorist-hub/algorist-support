@@ -42,14 +42,35 @@ public class ChatComponentTests : BunitContext
     {
         var cut = Render<ChatHeader>(p => p.Add(x => x.AssistantName, "Assistente Teste"));
 
-        Assert.Equal("Assistente Teste", cut.Find("h1").TextContent);
+        // The visible name lives in the brand bar; the header keeps it only as a screen-reader heading.
+        var heading = cut.Find("h1");
+        Assert.Equal("Assistente Teste", heading.TextContent);
+        Assert.Contains("visually-hidden", heading.ClassList);
         var notice = cut.Find(".chat-notice").TextContent;
         Assert.Contains("assistente automatizado de demonstração", notice);
         Assert.Contains("política fictícia", notice);
 
-        // The only button is "Nova conversa"; nothing dismisses the notice.
-        var button = Assert.Single(cut.FindAll("button"));
-        Assert.Contains("Nova conversa", button.TextContent);
+        // No buttons at all: nothing dismisses the notice, and "Nova conversa" moved to the composer.
+        Assert.Empty(cut.FindAll("button"));
+    }
+
+    [Fact]
+    public void Header_notice_ends_with_repository_link_in_a_new_window ()
+    {
+        var cut = Render<ChatHeader>(p => p.Add(x => x.AssistantName, "Assistente Teste"));
+
+        var link = cut.Find(".chat-notice a.chat-repo-link");
+        Assert.Equal("https://github.com/algorist-hub/algorist-support", link.GetAttribute("href"));
+        Assert.Equal("_blank", link.GetAttribute("target"));
+        Assert.Equal("noopener noreferrer", link.GetAttribute("rel"));
+        Assert.Equal("https://github.com/algorist-hub/algorist-support (abre em nova janela)", link.TextContent);
+        Assert.Equal(" (abre em nova janela)", link.QuerySelector(".visually-hidden")!.TextContent);
+
+        // The repository sentence is the end of the notice (ignoring the screen-reader-only hint).
+        var visibleText = cut.Find(".chat-notice").TextContent.Replace(" (abre em nova janela)", string.Empty);
+        Assert.EndsWith(
+            "Repositório do projeto: https://github.com/algorist-hub/algorist-support",
+            System.Text.RegularExpressions.Regex.Replace(visibleText, @"\s+", " ").Trim());
     }
 
     [Fact]
@@ -57,7 +78,7 @@ public class ChatComponentTests : BunitContext
     {
         var cut = Render<ChatHeader>(p => p.Add(x => x.AssistantName, "Assistente Teste"));
 
-        var link = cut.Find(".chat-notice a");
+        var link = cut.Find(".chat-notice a.chat-policy-link");
         Assert.Equal("politica", link.GetAttribute("href"));
         Assert.Equal("_blank", link.GetAttribute("target"));
         Assert.Equal("noopener noreferrer", link.GetAttribute("rel"));
@@ -286,6 +307,42 @@ public class ChatComponentTests : BunitContext
     }
 
     [Fact]
+    public void New_conversation_button_is_in_the_composer_row_before_the_counter ()
+    {
+        var cut = RenderComposer("Pergunta válida");
+
+        var footerChildren = cut.Find(".chat-composer-footer").QuerySelectorAll("button, #chat-counter").ToList();
+        Assert.Equal("Nova conversa", footerChildren[0].TextContent.Trim());
+        Assert.Equal("chat-counter", footerChildren[1].Id);
+        Assert.Equal("button", cut.Find(".chat-new").GetAttribute("type"));
+    }
+
+    [Fact]
+    public void New_conversation_button_invokes_callback_without_submitting ()
+    {
+        var cleared = 0;
+        var sent = 0;
+        var cut = Render<ChatComposer>(p => p
+            .Add(x => x.Value, "Pergunta válida")
+            .Add(x => x.MaxLength, 500)
+            .Add(x => x.OnSend, () => sent++)
+            .Add(x => x.OnNewConversation, () => cleared++));
+
+        cut.Find(".chat-new").Click();
+
+        Assert.Equal(1, cleared);
+        Assert.Equal(0, sent);
+    }
+
+    [Fact]
+    public void New_conversation_button_enabled_while_generating ()
+    {
+        var cut = RenderComposer("Pergunta válida", generating: true);
+
+        Assert.False(cut.Find(".chat-new").HasAttribute("disabled"));
+    }
+
+    [Fact]
     public void Stop_hidden_when_idle ()
     {
         var cut = RenderComposer("Pergunta válida");
@@ -374,6 +431,35 @@ public class ChatComponentTests : BunitContext
         });
     }
 
+    [Fact]
+    public void New_conversation_during_generation_stops_reply_and_clears_history ()
+    {
+        var cut = Render<ChatPanel>();
+        cut.Find("textarea").Input("Pergunta");
+        cut.Find("form").Submit();
+        client.Push("Parcial");
+        cut.WaitForAssertion(() => Assert.Single(cut.FindAll(".chat-stop")));
+
+        cut.Find(".chat-composer .chat-new").Click();
+        client.Push(" texto tardio");
+
+        cut.WaitForAssertion(() =>
+        {
+            Assert.Empty(cut.FindAll(".chat-message"));
+            Assert.Empty(cut.FindAll(".chat-stop"));
+            Assert.Equal(Suggestions.Length, cut.FindAll(".chat-chip").Count);
+        });
+    }
+
+    [Fact]
+    public void Header_has_no_new_conversation_button ()
+    {
+        var cut = Render<ChatPanel>();
+
+        Assert.Empty(cut.FindAll(".chat-header button"));
+        Assert.Single(cut.FindAll(".chat-composer .chat-new"));
+    }
+
     // ---- Maintenance mode ------------------------------------------------------------------------------------
 
     [Fact]
@@ -385,7 +471,7 @@ public class ChatComponentTests : BunitContext
 
         Assert.Contains("O chat está em manutenção", cut.Find(".chat-maintenance").TextContent);
         Assert.Empty(cut.FindAll("textarea"));
-        Assert.Equal("politica", cut.Find(".chat-notice a").GetAttribute("href"));
+        Assert.Equal("politica", cut.Find(".chat-notice a.chat-policy-link").GetAttribute("href"));
     }
 
     [Fact]
@@ -399,9 +485,11 @@ public class ChatComponentTests : BunitContext
         Assert.Equal("alert", cut.Find(".chat-maintenance").GetAttribute("role"));
         Assert.Equal("Assistente Teste", cut.Find("h1").TextContent);
         Assert.Contains("demonstração", cut.Find(".chat-notice").TextContent);
-        Assert.Equal("politica", cut.Find(".chat-notice a").GetAttribute("href"));
+        Assert.Equal("politica", cut.Find(".chat-notice a.chat-policy-link").GetAttribute("href"));
+        Assert.Equal("https://github.com/algorist-hub/algorist-support", cut.Find(".chat-notice a.chat-repo-link").GetAttribute("href"));
         Assert.Empty(cut.FindAll("textarea"));
         Assert.Empty(cut.FindAll(".chat-send"));
+        Assert.Empty(cut.FindAll(".chat-new"));
         Assert.Empty(cut.FindAll(".chat-chip"));
         Assert.Empty(client.Requests);
     }

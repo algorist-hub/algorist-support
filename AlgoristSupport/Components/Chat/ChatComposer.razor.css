@@ -19,10 +19,12 @@
     flex-wrap: wrap;
 }
 
+/* Left group: [Nova conversa] [counter] [validation message]; wraps on narrow screens. */
 .chat-composer-info {
     display: flex;
-    align-items: baseline;
-    gap: 0.75rem;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.4rem 0.75rem;
     min-width: 0;
     font-size: 0.85rem;
 }

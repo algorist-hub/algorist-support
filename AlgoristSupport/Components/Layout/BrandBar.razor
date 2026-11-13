@@ -1,8 +1,12 @@
+@inject IOptions<SupportChatOptions> ChatOptions
+
 @* Site-wide brand bar, styled like the header of algorist.com.br. Outside <main>, so it is the page's banner landmark. *@
 <header class="brand-bar">
     <a class="brand-link" href="@CompanySiteUrl" target="_blank" rel="noopener noreferrer">
         <img class="brand-logo" src="brand/logo.png" alt="Algorist" width="136" height="40" /><span class="visually-hidden"> (abre em nova janela)</span>
     </a>
+    @* Outside the link, so the link's accessible name stays "Algorist (abre em nova janela)". *@
+    <span class="brand-name">@ChatOptions.Value.AssistantName</span>
 </header>
 
 @code {

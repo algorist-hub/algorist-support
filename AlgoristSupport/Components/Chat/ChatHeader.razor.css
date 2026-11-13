@@ -1,18 +1,6 @@
 .chat-header {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 1rem;
     padding-bottom: 0.75rem;
     border-bottom: 1px solid var(--border-color);
-}
-
-.chat-title {
-    font-family: var(--font-heading);
-    font-weight: 700;
-    color: var(--heading-color);
-    font-size: 1.5rem;
-    margin: 0 0 0.35rem;
 }
 
 .chat-notice {
@@ -23,25 +11,25 @@
     background-color: var(--brand-gold-tint);
     border-left: 4px solid var(--brand-gold);
     border-radius: 0.25rem;
+    /* The repository URL wraps on narrow screens instead of causing horizontal scroll. */
+    overflow-wrap: anywhere;
 }
 
     .chat-notice strong {
         color: var(--heading-color);
     }
 
-/* Dark gold keeps the link distinguishable from the notice text, at 6.6:1 on the tint. */
-.chat-policy-link {
+/* Dark gold keeps the links distinguishable from the notice text, at 6.6:1 on the tint. */
+.chat-policy-link,
+.chat-repo-link {
     color: var(--brand-gold-text);
     font-weight: 600;
     text-decoration: underline;
 }
 
 .chat-policy-link:hover,
-.chat-policy-link:focus {
+.chat-policy-link:focus,
+.chat-repo-link:hover,
+.chat-repo-link:focus {
     color: var(--heading-color);
-}
-
-.chat-new {
-    flex-shrink: 0;
-    white-space: nowrap;
 }

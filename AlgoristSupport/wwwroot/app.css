@@ -140,7 +140,7 @@ a:focus-visible {
 }
 
 .btn:focus-visible, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
-    box-shadow: var(--focus-ring);
+    box-shadow: none;
 }
 
 .form-control:focus {

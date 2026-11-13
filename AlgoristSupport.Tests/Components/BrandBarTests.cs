@@ -1,11 +1,32 @@
+using AlgoristSupport.Chat;
 using AlgoristSupport.Components.Layout;
 using Bunit;
 using Microsoft.AspNetCore.Components;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 
 namespace AlgoristSupport.Tests.Components;
 
 public class BrandBarTests : BunitContext
 {
+    public BrandBarTests () =>
+        Services.AddSingleton(Options.Create(new SupportChatOptions { AssistantName = "Assistente Teste" }));
+
+    [Fact]
+    public void Configured_assistant_name_is_shown_beside_the_logo_outside_the_link ()
+    {
+        var cut = Render<BrandBar>();
+
+        var name = cut.Find("header.brand-bar > .brand-name");
+        Assert.Equal("Assistente Teste", name.TextContent);
+        Assert.Null(name.Closest("a"));
+        Assert.DoesNotContain("Assistente Teste", cut.Find("a.brand-link").TextContent);
+    }
+
+    [Fact]
+    public void Default_assistant_name_is_assistente_de_suporte () =>
+        Assert.Equal("Assistente de Suporte", new SupportChatOptions().AssistantName);
+
     [Fact]
     public void Logo_links_to_the_company_site_in_a_new_window ()
     {

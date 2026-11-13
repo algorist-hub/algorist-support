@@ -4,7 +4,7 @@
 @inject IJSRuntime JS
 
 <section class="chat-panel" aria-label="Chat de suporte">
-    <ChatHeader AssistantName="@Options.AssistantName" OnNewConversation="NewConversation" />
+    <ChatHeader AssistantName="@Options.AssistantName" />
 
     @if (!Session.IsAvailable)
     {
@@ -51,7 +51,8 @@
                       MaxLength="Session.MaxMessageLength"
                       IsGenerating="Session.IsGenerating"
                       OnSend="SendDraftAsync"
-                      OnStop="Session.Stop" />
+                      OnStop="Session.Stop"
+                      OnNewConversation="NewConversation" />
     }
 </section>
 

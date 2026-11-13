@@ -98,7 +98,7 @@ dotnet user-secrets set "chat_max_history_sent" "10"
 
 | Key | Default | Description |
 | --- | --- | --- |
-| `AssistantName` | `Assistente Algorist` | Name shown in the header. |
+| `AssistantName` | `Assistente de Suporte` | Name shown in the top bar next to the logo and in screen-reader labels. |
 | `MaxMessageLength` | `500` | Maximum characters per message (1–4000). |
 | `ReplyTimeoutSeconds` | `30` | A reply not completed within this time is cancelled and shown as failed (1–600). |
 | `SuggestedQuestions` | 4 policy questions | Chips shown on an empty conversation (empty list hides them). |

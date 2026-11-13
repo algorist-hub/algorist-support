@@ -12,6 +12,7 @@
 }
 
 .brand-link {
+    flex-shrink: 0;
     display: inline-flex;
     align-items: center;
     line-height: 1;
@@ -31,6 +32,22 @@
     width: auto;
 }
 
+/* Assistant name beside the logo: white on the dark bar (above 15:1). */
+.brand-name {
+    min-width: 0;
+    margin-left: 1rem;
+    padding-left: 1rem;
+    border-left: 1px solid rgba(255, 255, 255, 0.3);
+    font-family: var(--font-ui);
+    font-weight: 500;
+    font-size: 1.05rem;
+    line-height: 1.6;
+    color: #ffffff;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
 @media (max-width: 575.98px) {
     .brand-bar {
         padding: 0 1rem;
@@ -38,5 +55,11 @@
 
     .brand-logo {
         height: 32px;
+    }
+
+    .brand-name {
+        margin-left: 0.75rem;
+        padding-left: 0.75rem;
+        font-size: 0.95rem;
     }
 }

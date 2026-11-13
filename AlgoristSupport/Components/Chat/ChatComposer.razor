@@ -13,6 +13,8 @@
 
     <div class="chat-composer-footer">
         <div class="chat-composer-info">
+            @* type="button": inside the form, it must never submit. Stays enabled while generating (it stops the reply). *@
+            <button type="button" class="btn btn-outline-secondary chat-new" @onclick="OnNewConversation">Nova conversa</button>
             <span id="chat-counter" class="chat-counter @(IsTooLong ? "chat-counter-error" : null)">@Length/@MaxLength</span>
             <span id="chat-feedback" class="chat-feedback" role="alert">@(IsTooLong ? validation.Message : null)</span>
         </div>
@@ -49,6 +51,9 @@
 
     [Parameter]
     public EventCallback OnStop { get; set; }
+
+    [Parameter]
+    public EventCallback OnNewConversation { get; set; }
 
     private int Length => Value?.Length ?? 0;
 

@@ -13,7 +13,7 @@ public sealed class SupportChatOptions
     public const string SectionName = "Chat";
 
     [Required(AllowEmptyStrings = false)]
-    public string AssistantName { get; set; } = "Assistente Algorist";
+    public string AssistantName { get; set; } = "Assistente de Suporte";
 
     [Range(1, 4000)]
     public int MaxMessageLength { get; set; } = 500;
