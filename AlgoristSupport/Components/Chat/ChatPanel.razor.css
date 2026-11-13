@@ -29,6 +29,7 @@
 .chat-welcome {
     margin: 0;
     font-size: 1.05rem;
+    color: var(--heading-color);
 }
 
 .chat-generating {
@@ -37,7 +38,7 @@
     align-items: center;
     gap: 0.5rem;
     font-size: 0.875rem;
-    color: #6c757d;
+    color: var(--muted-color);
 }
 
 .chat-dots {
@@ -81,15 +82,17 @@
 .chat-maintenance {
     margin-top: 1rem;
     padding: 1rem 1.25rem;
-    border: 1px solid #f0c36d;
-    border-radius: 0.5rem;
-    background-color: #fff8e6;
-    color: #664d03;
+    border-left: 4px solid var(--brand-gold);
+    border-radius: 0.25rem;
+    background-color: var(--brand-gold-tint);
+    color: var(--text-color);
 }
 
 .chat-maintenance-title {
     margin: 0 0 0.25rem;
-    font-weight: 600;
+    font-family: var(--font-heading);
+    font-weight: 700;
+    color: var(--heading-color);
 }
 
 .chat-maintenance-text {
@@ -99,5 +102,5 @@
 .chat-limit-notice {
     margin: 0;
     font-size: 0.875rem;
-    color: #b02a37;
+    color: var(--danger-color);
 }

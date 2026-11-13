@@ -1,6 +1,6 @@
 .chat-suggestions-title {
     font-size: 0.9rem;
-    color: #6c757d;
+    color: var(--muted-color);
     margin-bottom: 0.5rem;
 }
 
@@ -16,4 +16,6 @@
 .chat-chip {
     border-radius: 999px;
     text-align: left;
+    font-family: var(--font-body);
+    font-weight: 400;
 }

@@ -24,6 +24,9 @@ namespace AlgoristSupport
             var policy = PolicyDocumentLoader.Load(PolicyDocumentLoader.DefaultPath);
             builder.Services.AddSingleton(policy);
 
+            // Numbered policy sections: which citations in replies become links, and the anchors on /politica.
+            builder.Services.AddSingleton(PolicySectionIndex.From(policy));
+
             // AI provider settings come from flat keys (user secrets / environment variables); when any is missing or
             // invalid, or the policy could not be loaded, the app still starts and the chat shows a maintenance message.
             var availability = ChatAvailability.FromConfiguration(builder.Configuration, policy);

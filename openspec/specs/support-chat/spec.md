@@ -7,12 +7,16 @@ Provides the end-user support chat experience in pt-BR: a chat screen where a vi
 ## Requirements
 
 ### Requirement: Chat screen header and demo notice
-The chat screen SHALL display a header containing the configured assistant name and a permanent notice, in pt-BR, stating that the assistant is an automated demo and that it answers about a fictional policy. The notice MUST remain visible at all times, regardless of conversation length or state, and MUST NOT be dismissible. The notice's reference to the fictional policy MUST be a link to the policy page (`/politica`) that opens in a new browser tab or window, keeping the chat and its conversation intact, and whose accessible name indicates that it opens in a new window.
+The chat screen SHALL display a header containing a permanent notice, in pt-BR, stating that the assistant is an automated demo and that it answers about a fictional policy. The configured assistant name MUST NOT appear as a visible title in the header, because it is shown in the brand top bar. The chat screen MUST still have a level-1 heading with the configured assistant name for assistive technology. The notice MUST remain visible at all times, regardless of conversation length or state, and MUST NOT be dismissible. The notice's reference to the fictional policy MUST be a link to the policy page (`/politica`) that opens in a new browser tab or window, keeping the chat and its conversation intact, and whose accessible name indicates that it opens in a new window.
 
 #### Scenario: Header shown on first load
 - **WHEN** a visitor opens the chat screen
-- **THEN** the header shows the configured assistant name
-- **AND** the header shows a notice that this is an automated demo assistant and the policy is fictional
+- **THEN** the header shows a notice that this is an automated demo assistant and the policy is fictional
+- **AND** no visible title with the assistant name is shown below the top bar
+
+#### Scenario: Screen-reader heading kept
+- **WHEN** a screen-reader user lists the headings of the chat screen
+- **THEN** a level-1 heading with the configured assistant name is present
 
 #### Scenario: Notice stays visible in a long conversation
 - **WHEN** the conversation has enough messages to scroll the message list
@@ -36,7 +40,7 @@ The chat screen SHALL display a header containing the configured assistant name 
 - **THEN** the notice and its policy link are still displayed
 
 ### Requirement: Message list rendering
-The chat screen SHALL display the conversation as an ordered list of messages, oldest first, where each message is visually and semantically identified as either a user message or an assistant message. User message text MUST be rendered as plain text (no HTML or Markdown interpretation) and MUST preserve line breaks entered by the user. Assistant message text MUST be rendered as Markdown formatting (the Markdown markers themselves are not shown), with raw HTML in the reply escaped rather than interpreted and links kept only for `http`, `https` and `mailto` URLs.
+The chat screen SHALL display the conversation as an ordered list of messages, oldest first, where each message is visually and semantically identified as either a user message or an assistant message. User message text MUST be rendered as plain text (no HTML or Markdown interpretation) and MUST preserve line breaks entered by the user. Assistant message text MUST be rendered as Markdown formatting (the Markdown markers themselves are not shown), with raw HTML in the reply escaped rather than interpreted and links kept only for `http`, `https` and `mailto` URLs. The only exception is links to the policy page that the application itself generates from policy section citations.
 
 #### Scenario: User and assistant messages are distinguishable
 - **WHEN** the conversation contains a user message followed by an assistant reply
@@ -54,6 +58,10 @@ The chat screen SHALL display the conversation as an ordered list of messages, o
 #### Scenario: Unsafe content in an assistant reply is neutralized
 - **WHEN** an assistant reply contains `<script>` markup or a `javascript:` link
 - **THEN** the markup is shown as literal text and the link has no `javascript:` target
+
+#### Scenario: Model-written relative links are still removed
+- **WHEN** an assistant reply contains the Markdown link `[veja](politica#secao-12)`
+- **THEN** the text `veja` is shown without a link
 
 #### Scenario: Multi-line message preserves line breaks
 - **WHEN** a user sends a message containing two lines
@@ -214,7 +222,7 @@ If generating an assistant reply fails (provider error, network error, the 30-se
 - **THEN** it is shown with the generic pt-BR error message and the try-again button
 
 ### Requirement: New conversation
-The chat screen SHALL provide a "New conversation" button that clears the entire conversation history for the current session and returns the screen to its empty state (showing suggested questions). If a reply is in progress, it MUST be stopped before clearing. The input content MUST be cleared as well.
+The chat screen SHALL provide a "New conversation" button that clears the entire conversation history for the current session and returns the screen to its empty state (showing suggested questions). If a reply is in progress, it MUST be stopped before clearing. The input content MUST be cleared as well. The button MUST be in the composer row, at its start, before the character counter, on the same line as the Send button when the width allows. It is not shown in maintenance mode, where the composer is hidden.
 
 #### Scenario: Clear history
 - **WHEN** a user with several messages clicks "New conversation"
@@ -224,6 +232,11 @@ The chat screen SHALL provide a "New conversation" button that clears the entire
 #### Scenario: Clear during generation
 - **WHEN** a user clicks "New conversation" while a reply is in progress
 - **THEN** generation stops, the history is cleared, and no text from the stopped reply reappears afterwards
+
+#### Scenario: Button placed in the composer row
+- **WHEN** a visitor views the chat screen on a desktop-width viewport
+- **THEN** the "Nova conversa" button is on the same line as the "Enviar" button, to the left of the character counter
+- **AND** it is no longer shown in the header
 
 ### Requirement: Suggested questions
 When the conversation is empty, the chat screen SHALL display clickable chips with configured suggested questions in pt-BR about the policy. Clicking a chip MUST send that question as a user message, subject to the same rules as typed messages. The chips MUST be hidden once the conversation has at least one message.
@@ -266,3 +279,59 @@ All user-facing chat text (labels, buttons, placeholders, notices, indicators, v
 #### Scenario: Controls labeled in pt-BR
 - **WHEN** a visitor views the chat screen
 - **THEN** the Send, Stop, New conversation and Try again controls and the input placeholder are labeled in pt-BR
+
+### Requirement: Linked policy section citations
+In a finished assistant reply, each citation of an existing policy section (`Seção N`, `Seção N.M` or `Seções N e M`, case-insensitive) SHALL become a link to that section on the policy page, opening in a new tab or window. `N.M` links to section N. The cited text MUST stay as written. Each link's accessible name MUST include the section title and say it opens in a new window.
+
+#### Scenario: Cited section becomes a link
+- **WHEN** a finished assistant reply contains `(Seção 12)` and the policy has section 12 "Garantia"
+- **THEN** the text `Seção 12` is a link to the section 12 anchor of `/politica` that opens in a new tab or window
+- **AND** the link's accessible name includes "Garantia" and indicates that it opens in a new window
+
+#### Scenario: Clause reference links to its section
+- **WHEN** a finished assistant reply contains `Seção 8.6`
+- **THEN** the text `Seção 8.6` is shown unchanged and links to the section 8 anchor
+
+#### Scenario: Several sections in one citation
+- **WHEN** a finished assistant reply contains `Seções 12 e 13`
+- **THEN** `12` links to the section 12 anchor and `13` links to the section 13 anchor
+
+### Requirement: Unlinked citations
+A citation SHALL NOT become a link when the section number does not exist in the loaded policy, when it appears in a user message, inside code formatting or inside an existing link, or while the reply is still streaming. In those cases the text MUST be shown unchanged.
+
+#### Scenario: Unknown section stays plain text
+- **WHEN** a finished assistant reply contains `Seção 99` and the policy has no section 99
+- **THEN** `Seção 99` is shown as plain text without a link
+
+#### Scenario: User message is not linked
+- **WHEN** a user sends the message `O que diz a Seção 12?`
+- **THEN** the message is shown as plain text without a link
+
+#### Scenario: Code formatting is not linked
+- **WHEN** a finished assistant reply contains `` `Seção 12` ``
+- **THEN** it is shown as code without a link
+
+#### Scenario: Links appear when streaming ends
+- **WHEN** an assistant reply containing `(Seção 12)` is still streaming
+- **THEN** `Seção 12` is shown as plain text
+- **AND** once the reply is complete or stopped, `Seção 12` becomes a link
+
+### Requirement: Project repository link in the demo notice
+The demo notice SHALL end with the sentence "Repositório do projeto: https://github.com/algorist-hub/algorist-support", where the URL is a link to that repository. The link MUST open in a new browser tab or window, keeping the chat and its conversation intact, and its accessible name MUST state, in pt-BR, that it opens in a new window.
+
+#### Scenario: Repository sentence shown
+- **WHEN** a visitor opens the chat screen
+- **THEN** the demo notice ends with "Repositório do projeto: https://github.com/algorist-hub/algorist-support"
+
+#### Scenario: Repository link opens in a new window
+- **WHEN** a visitor activates the repository link
+- **THEN** `https://github.com/algorist-hub/algorist-support` opens in a new browser tab or window
+- **AND** the chat tab keeps its current conversation
+
+#### Scenario: Repository link is accessible
+- **WHEN** a screen-reader user reaches the repository link
+- **THEN** its accessible name includes the repository address and states, in pt-BR, that it opens in a new window
+
+#### Scenario: Repository link available in maintenance mode
+- **WHEN** the chat is in maintenance mode
+- **THEN** the notice still ends with the repository sentence and link

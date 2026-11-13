@@ -1,0 +1,65 @@
+.brand-bar {
+    /* First item of the 100dvh layout column, so it never scrolls away or covers content. */
+    position: relative;
+    z-index: 997;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    height: var(--brand-bar-height);
+    padding: 0 1.5rem;
+    background-color: var(--brand-bar-background);
+    box-shadow: 0 0 18px rgba(0, 0, 0, 0.1);
+}
+
+.brand-link {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    line-height: 1;
+    border-radius: 0.25rem;
+}
+
+/* On the dark bar the gold alone has 13:1 contrast, so no dark inner ring is needed. */
+.brand-link:focus-visible {
+    outline: 2px solid var(--brand-gold);
+    outline-offset: 4px;
+    box-shadow: none;
+}
+
+.brand-logo {
+    display: block;
+    height: 40px;
+    width: auto;
+}
+
+/* Assistant name beside the logo: white on the dark bar (above 15:1). */
+.brand-name {
+    min-width: 0;
+    margin-left: 1rem;
+    padding-left: 1rem;
+    border-left: 1px solid rgba(255, 255, 255, 0.3);
+    font-family: var(--font-ui);
+    font-weight: 500;
+    font-size: 1.05rem;
+    line-height: 1.6;
+    color: #ffffff;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+@media (max-width: 575.98px) {
+    .brand-bar {
+        padding: 0 1rem;
+    }
+
+    .brand-logo {
+        height: 32px;
+    }
+
+    .brand-name {
+        margin-left: 0.75rem;
+        padding-left: 0.75rem;
+        font-size: 0.95rem;
+    }
+}

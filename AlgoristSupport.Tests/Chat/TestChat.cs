@@ -20,6 +20,10 @@ internal static class TestChat
     public static PolicyLoadResult MissingPolicy () =>
         PolicyLoadResult.Failed("Policy/policy.md", PolicyLoadProblem.Missing);
 
+    /// <summary>Section index with sections 8 ("Preços"), 12 ("Garantia") and 13 ("Suporte (SLA)").</summary>
+    public static PolicySectionIndex Sections () =>
+        PolicySectionIndex.Build(new PolicyDocument("# Política\n\n## 8. Preços\n\n## 12. Garantia\n\n## 13. Suporte (SLA)\n"));
+
     public static ChatAvailability Available (int maxPerMinute = 100, int maxHistory = 10) =>
         new(new ChatProviderLoadResult(Settings(maxPerMinute, maxHistory), []), Policy());
 
