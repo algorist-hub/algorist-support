@@ -9,6 +9,7 @@
     max-height: 10rem;
     field-sizing: content;
     min-height: 3.25rem;
+    background-color: var(--chat-bg);
 }
 
 .chat-composer-footer {

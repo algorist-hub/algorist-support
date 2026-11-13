@@ -47,7 +47,7 @@ public class ChatComponentTests : BunitContext
         Assert.Equal("Assistente Teste", heading.TextContent);
         Assert.Contains("visually-hidden", heading.ClassList);
         var notice = cut.Find(".chat-notice").TextContent;
-        Assert.Contains("assistente automatizado de demonstração", notice);
+        Assert.Contains("Assistente automatizado de demonstração", notice);
         Assert.Contains("política fictícia", notice);
 
         // No buttons at all: nothing dismisses the notice, and "Nova conversa" moved to the composer.
@@ -312,7 +312,7 @@ public class ChatComponentTests : BunitContext
         var cut = RenderComposer("Pergunta válida");
 
         var footerChildren = cut.Find(".chat-composer-footer").QuerySelectorAll("button, #chat-counter").ToList();
-        Assert.Equal("Nova conversa", footerChildren[0].TextContent.Trim());
+        Assert.Equal("Limpar", footerChildren[0].TextContent.Trim());
         Assert.Equal("chat-counter", footerChildren[1].Id);
         Assert.Equal("button", cut.Find(".chat-new").GetAttribute("type"));
     }

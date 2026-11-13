@@ -6,7 +6,7 @@
     <textarea id="chat-input" @ref="textareaElement"
               class="form-control chat-input @(IsTooLong ? "is-invalid" : null)"
               rows="2"
-              placeholder="Digite sua pergunta sobre a política… (Enter envia, Shift+Enter quebra linha)"
+              placeholder="Digite sua pergunta…"
               aria-describedby="chat-counter chat-feedback"
               aria-invalid="@(IsTooLong ? "true" : "false")"
               @bind:get="Value" @bind:set="SetValueAsync" @bind:event="oninput"></textarea>
@@ -14,7 +14,7 @@
     <div class="chat-composer-footer">
         <div class="chat-composer-info">
             @* type="button": inside the form, it must never submit. Stays enabled while generating (it stops the reply). *@
-            <button type="button" class="btn btn-outline-secondary chat-new" @onclick="OnNewConversation">Nova conversa</button>
+            <button type="button" class="btn btn-outline-secondary chat-new" @onclick="OnNewConversation">Limpar</button>
             <span id="chat-counter" class="chat-counter @(IsTooLong ? "chat-counter-error" : null)">@Length/@MaxLength</span>
             <span id="chat-feedback" class="chat-feedback" role="alert">@(IsTooLong ? validation.Message : null)</span>
         </div>

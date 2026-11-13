@@ -23,6 +23,10 @@ jobs:
         with:
           dotnet-version: '10.x'
 
+      # Tests use a fake IChatClient and a fake clock: no secrets and no network calls needed
+      - name: dotnet test
+        run: dotnet test ./AlgoristSupport.slnx -c Release
+
       - name: dotnet publish
         run: dotnet publish ./AlgoristSupport/AlgoristSupport.csproj -c Release -o ${{env.DOTNET_ROOT}}/myapp
 
