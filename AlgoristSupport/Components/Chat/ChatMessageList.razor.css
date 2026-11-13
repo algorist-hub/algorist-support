@@ -26,14 +26,14 @@
 }
 
 .chat-message-user .chat-bubble {
-    background-color: #1b6ec2;
-    color: #fff;
+    background-color: var(--brand-gold);
+    color: var(--heading-color);
     border-bottom-right-radius: 0.25rem;
 }
 
 .chat-message-assistant .chat-bubble {
-    background-color: #f1f3f5;
-    color: #212529;
+    background-color: var(--surface-color);
+    color: var(--text-color);
     border-bottom-left-radius: 0.25rem;
 }
 
@@ -75,12 +75,16 @@
 .chat-markdown ::deep h4,
 .chat-markdown ::deep h5,
 .chat-markdown ::deep h6 {
+    font-family: var(--font-heading);
     font-size: 1rem;
-    font-weight: 600;
+    font-weight: 700;
+    color: var(--heading-color);
     margin: 0.5rem 0 0.25rem;
 }
 
 .chat-markdown ::deep code {
+    font-family: var(--font-mono);
+    color: inherit;
     font-size: 0.875em;
     background-color: rgba(0, 0, 0, 0.06);
     padding: 0.1rem 0.25rem;
@@ -100,9 +104,9 @@
 }
 
 .chat-markdown ::deep blockquote {
-    border-left: 3px solid #ced4da;
+    border-left: 3px solid var(--brand-gold);
     padding-left: 0.6rem;
-    color: #495057;
+    color: var(--text-color);
 }
 
 .chat-markdown ::deep table {
@@ -111,13 +115,13 @@
 
 .chat-markdown ::deep th,
 .chat-markdown ::deep td {
-    border: 1px solid #ced4da;
+    border: 1px solid var(--border-color);
     padding: 0.2rem 0.4rem;
 }
 
 /* Links to a policy section (generated from "Seção N" citations). */
 .chat-markdown ::deep a.policy-citation {
-    color: #0b5394;
+    color: var(--brand-gold-text);
     font-weight: 500;
     text-decoration: underline dotted;
     text-underline-offset: 0.15em;
@@ -126,6 +130,7 @@
 
 .chat-markdown ::deep a.policy-citation:hover,
 .chat-markdown ::deep a.policy-citation:focus-visible {
+    color: var(--heading-color);
     text-decoration-style: solid;
 }
 
@@ -136,11 +141,11 @@
 .chat-status {
     font-size: 0.8rem;
     font-style: italic;
-    color: #6c757d;
+    color: var(--muted-color);
 }
 
 .chat-status-error {
-    color: #b02a37;
+    color: var(--danger-color);
     font-style: normal;
 }
 

@@ -28,13 +28,13 @@
 }
 
 .chat-counter {
-    color: #6c757d;
+    color: var(--muted-color);
     font-variant-numeric: tabular-nums;
 }
 
 .chat-counter-error,
 .chat-feedback {
-    color: #b02a37;
+    color: var(--danger-color);
 }
 
 .chat-counter-error {

@@ -1,0 +1,42 @@
+.brand-bar {
+    /* First item of the 100dvh layout column, so it never scrolls away or covers content. */
+    position: relative;
+    z-index: 997;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    height: var(--brand-bar-height);
+    padding: 0 1.5rem;
+    background-color: var(--brand-bar-background);
+    box-shadow: 0 0 18px rgba(0, 0, 0, 0.1);
+}
+
+.brand-link {
+    display: inline-flex;
+    align-items: center;
+    line-height: 1;
+    border-radius: 0.25rem;
+}
+
+/* On the dark bar the gold alone has 13:1 contrast, so no dark inner ring is needed. */
+.brand-link:focus-visible {
+    outline: 2px solid var(--brand-gold);
+    outline-offset: 4px;
+    box-shadow: none;
+}
+
+.brand-logo {
+    display: block;
+    height: 40px;
+    width: auto;
+}
+
+@media (max-width: 575.98px) {
+    .brand-bar {
+        padding: 0 1rem;
+    }
+
+    .brand-logo {
+        height: 32px;
+    }
+}

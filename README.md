@@ -47,6 +47,18 @@ visitors can also read at `/politica`.
 - The model never writes the URLs: the app builds them from the policy's numbered headings (`## N. Title`), and
   each numbered heading on `/politica` gets the title-independent anchor `secao-N`, highlighted when targeted.
 
+## Look and feel
+
+- The UI follows the visual identity of [algorist.com.br](https://algorist.com.br): a dark top bar with the gold
+  Algorist logo (linking to the company site in a new tab), gold `#ffc451` accents, Raleway headings, Roboto body
+  text, Poppins buttons and Roboto Mono code.
+- Colors and fonts are design tokens (CSS custom properties) at the top of
+  [`wwwroot/app.css`](AlgoristSupport/wwwroot/app.css). Bootstrap is themed through its own CSS variables, with no
+  Sass build. The bright gold is never used as text on light backgrounds; a darker gold keeps links at WCAG AA contrast.
+- Fonts are self-hosted in [`wwwroot/fonts`](AlgoristSupport/wwwroot/fonts) under the SIL Open Font License
+  ([`OFL.txt`](AlgoristSupport/wwwroot/fonts/OFL.txt)), so pages make no third-party font requests.
+- A test (`BrandStyleTests`) fails if a default template blue comes back into the app's stylesheets.
+
 ## AI provider settings (required)
 
 These seven settings are read by **exact name** from the root of the configuration. They have no defaults and
