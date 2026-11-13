@@ -15,29 +15,27 @@
 
 /* Design tokens. Contrast ratios are recorded in openspec design D1; keep them when changing values. */
 :root {
-    --brand-gold: #ffc451;          /* backgrounds, borders, focus ring. Never as text on light backgrounds (1.6:1). */
+    --brand-gold: #ffc451; /* backgrounds, borders, focus ring. Never as text on light backgrounds (1.6:1). */
     --brand-gold-hover: #f0b12e;
     --brand-gold-active: #e6a41f;
-    --brand-gold-text: #7a5000;     /* gold-family text on light backgrounds (7.1:1 on white) */
+    --brand-gold-text: #7a5000; /* gold-family text on light backgrounds (7.1:1 on white) */
     --brand-gold-tint: #fff6e0;
     --heading-color: #151515;
     --text-color: #444444;
     --muted-color: #666666;
     --surface-color: #f1f1f1;
-    --page-background: #ffffff;
+    --page-background: #eee;
+    --chat-bg: #fff;
     --border-color: #dddddd;
     --danger-color: #b02a37;
     --brand-bar-background: rgba(0, 0, 0, 0.85);
     --brand-bar-height: 4rem;
-
     --font-body: "Roboto", "Segoe UI", "Helvetica Neue", Arial, "Noto Sans", sans-serif;
     --font-heading: "Raleway", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
     --font-ui: "Poppins", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
     --font-mono: "Roboto Mono", SFMono-Regular, Consolas, "Liberation Mono", monospace;
-
     /* Dark inner ring carries the contrast on light backgrounds, the gold outer ring carries the brand. */
     --focus-ring: 0 0 0 0.125rem var(--heading-color), 0 0 0 0.3rem var(--brand-gold);
-
     /* Bootstrap theme (variables instead of a Sass rebuild). */
     --bs-body-font-family: var(--font-body);
     --bs-body-color: var(--text-color);
